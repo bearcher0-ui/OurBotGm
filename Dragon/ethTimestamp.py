@@ -47,7 +47,7 @@ class EthTimestampTransactions:
             'accept-language': 'fr-FR,fr;q=0.9,en-US;q=0.8,en;q=0.7',
             'dnt': '1',
             'priority': 'u=1, i',
-            'referer': 'http://172.86.110.62:1337/?chain=sol',
+            'referer': 'https://gmgn.ai/?chain=sol',
             'user-agent': self.user_agent
         }
 
