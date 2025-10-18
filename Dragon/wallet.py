@@ -191,9 +191,9 @@ class BulkWalletChecker:
                 fast_tx_ratio = data['risk']['fast_tx_ratio']
                 fastTxPercent = f"{fast_tx_ratio * 100:.2f}%"
             else:
-                fastTxPercent = "?"
+                fastTxPercent = "110"
         except (TypeError, KeyError, AttributeError):
-            fastTxPercent = "?"
+            fastTxPercent = "110"
 
         # Calculate no_buy_hold_ratio from risk data
         try:
