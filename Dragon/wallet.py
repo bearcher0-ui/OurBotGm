@@ -154,7 +154,7 @@ class BulkWalletChecker:
     def processWalletData(self, wallet, data):
         pnl7d = f"{data['pnl_7d']:,.2f}" if data['pnl_7d'] is not None else "-1.23"
         realizedProfit7dUSD = f"${data['realized_profit_7d']:,.2f}" if data['realized_profit_7d'] is not None else "-1.23"
-        winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "-1.23"
+        winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "-1.23%"
         buy7d = f"{data['buy_7d']}" if data['buy_7d'] is not None else "-1.23"
         sell7d = f"{data['sell_7d']}" if data['sell_7d'] is not None else "-1.23"
         tokenNum = f"{data['token_num']}" if data['token_num'] is not None else "-1.23"
@@ -331,3 +331,4 @@ class BulkWalletChecker:
         print(f"[🐲] Saved data for {len(resultDict.items())} wallets to {filename}")
         if filteredCount > 0:
             print(f"[🐲] Filtered out {filteredCount} wallets that didn't meet the criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, and No buy hold ratio <= 20%)")
+
