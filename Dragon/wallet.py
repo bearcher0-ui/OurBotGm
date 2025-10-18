@@ -268,9 +268,11 @@ class BulkWalletChecker:
         for result in self.results:
             wallet = result.get('wallet')
             if wallet:
-                # Check winrate filter - exclude wallets with winrate < 40%
+                # Check all filters
                 winrate_str = result.get('Winrate', '0%')
                 usdprofit_str = result.get('USDProfit', '$0.00')
+                fast_tx_str = result.get('Fast tx %', '0%')
+                no_buy_hold_str = result.get('No buy hold ratio', '0%')
                 
                 try:
                     # Extract numeric value from winrate string (e.g., "45.23%" -> 45.23)
@@ -279,7 +281,15 @@ class BulkWalletChecker:
                     # Extract numeric value from USDProfit string (e.g., "$123.45" -> 123.45)
                     usdprofit_value = float(usdprofit_str.replace('$', '').replace(',', ''))
                     
-                    if winrate_value >= 40.0 and usdprofit_value >= 0.01:
+                    # Extract numeric value from Fast tx % string (e.g., "25.50%" -> 25.50)
+                    fast_tx_value = float(fast_tx_str.replace('%', ''))
+                    
+                    # Extract numeric value from No buy hold ratio string (e.g., "15.50%" -> 15.50)
+                    no_buy_hold_value = float(no_buy_hold_str.replace('%', ''))
+                    
+                    # Apply all filters: winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, No buy hold ratio <= 20%
+                    if (winrate_value >= 40.0 and usdprofit_value >= 0.01 and 
+                        fast_tx_value <= 30.0 and no_buy_hold_value <= 20.0):
                         resultDict[wallet] = result
                         result.pop('wallet', None)
                     else:
@@ -288,6 +298,10 @@ class BulkWalletChecker:
                             print(f"[🐲] Filtered out wallet {wallet} with winrate {winrate_str} (< 40%)")
                         if usdprofit_value < 0.01:
                             print(f"[🐲] Filtered out wallet {wallet} with USDProfit {usdprofit_str} (< $0.01)")
+                        if fast_tx_value > 30.0:
+                            print(f"[🐲] Filtered out wallet {wallet} with Fast tx % {fast_tx_str} (> 30%)")
+                        if no_buy_hold_value > 20.0:
+                            print(f"[🐲] Filtered out wallet {wallet} with No buy hold ratio {no_buy_hold_str} (> 20%)")
                 except (ValueError, TypeError):
                     # If values cannot be parsed, include the wallet (safer approach)
                     resultDict[wallet] = result
@@ -296,17 +310,25 @@ class BulkWalletChecker:
                 print(f"[🐲] Missing 'wallet' key in result: {result}")
 
         if not resultDict:
-            print("[🐲] No wallets meet the criteria (winrate >= 40% and USDProfit >= $0.01). No CSV file created.")
+            print("[🐲] No wallets meet the criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, and No buy hold ratio <= 20%). No CSV file created.")
             return
 
         identifier = self.shorten(list(resultDict)[0])
         filename = f"1.csv"
         path = f"Dragon/data/Solana/BulkWallet/wallets_{filename}"
 
-        with open(path, 'w', newline='') as outfile:
+        # Check if file exists to determine if we need to write header
+        file_exists = os.path.exists(path)
+        
+        # Define header for use in both header writing and data writing
+        header = ['Identifier'] + list(next(iter(resultDict.values())).keys())
+        
+        with open(path, 'a', newline='') as outfile:
             writer = csv.writer(outfile)
-            header = ['Identifier'] + list(next(iter(resultDict.values())).keys())
-            writer.writerow(header)
+            
+            # Only write header if file doesn't exist or is empty
+            if not file_exists or os.path.getsize(path) == 0:
+                writer.writerow(header)
 
             for key, value in resultDict.items():
                 row = [key]
@@ -314,6 +336,6 @@ class BulkWalletChecker:
                     row.append(value.get(h))
                 writer.writerow(row)
 
-        print(f"[🐲] Saved data for {len(resultDict.items())} wallets to {filename}")
+        print(f"[🐲] Appended data for {len(resultDict.items())} wallets to {filename}")
         if filteredCount > 0:
-            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40% or USDProfit < $0.01")
+            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%, USDProfit < $0.01, Fast tx % > 30%, or No buy hold ratio > 20%")
