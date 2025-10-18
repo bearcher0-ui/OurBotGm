@@ -154,7 +154,7 @@ class BulkWalletChecker:
     def processWalletData(self, wallet, data):
         pnl7d = f"{data['pnl_7d']:,.2f}" if data['pnl_7d'] is not None else "-1.23"
         realizedProfit7dUSD = f"${data['realized_profit_7d']:,.2f}" if data['realized_profit_7d'] is not None else "-1.23"
-        winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "-1.23?"
+        winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "-1.23"
         buy7d = f"{data['buy_7d']}" if data['buy_7d'] is not None else "-1.23"
         sell7d = f"{data['sell_7d']}" if data['sell_7d'] is not None else "-1.23"
         tokenNum = f"{data['token_num']}" if data['token_num'] is not None else "-1.23"
@@ -317,18 +317,10 @@ class BulkWalletChecker:
         filename = f"1.csv"
         path = f"Dragon/data/Solana/BulkWallet/wallets_{filename}"
 
-        # Check if file exists to determine if we need to write header
-        file_exists = os.path.exists(path)
-        
-        # Define header for use in both header writing and data writing
-        header = ['Identifier'] + list(next(iter(resultDict.values())).keys())
-        
-        with open(path, 'a', newline='') as outfile:
+        with open(path, 'w', newline='') as outfile:
             writer = csv.writer(outfile)
-            
-            # Only write header if file doesn't exist or is empty
-            if not file_exists or os.path.getsize(path) == 0:
-                writer.writerow(header)
+            header = ['Identifier'] + list(next(iter(resultDict.values())).keys())
+            writer.writerow(header)
 
             for key, value in resultDict.items():
                 row = [key]
@@ -336,6 +328,6 @@ class BulkWalletChecker:
                     row.append(value.get(h))
                 writer.writerow(row)
 
-        print(f"[🐲] Appended data for {len(resultDict.items())} wallets to {filename}")
+        print(f"[🐲] Saved data for {len(resultDict.items())} wallets to {filename}")
         if filteredCount > 0:
-            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%, USDProfit < $0.01, Fast tx % > 30%, or No buy hold ratio > 20%")
+            print(f"[🐲] Filtered out {filteredCount} wallets that didn't meet the criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, and No buy hold ratio <= 20%)")
