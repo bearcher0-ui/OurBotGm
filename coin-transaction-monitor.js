@@ -18,6 +18,9 @@ class CoinTransactionMonitor {
         this.tokenActivityTimers = new Map(); // Track last activity time for each token
         this.inactiveTimeout = 3 * 60 * 1000; // 3 minutes in milliseconds
         
+        // Clear .txt files when code is initiated
+        this.clearTxtFiles();
+        
         // Setup readline for key press detection
         this.rl = readline.createInterface({
             input: process.stdin,
@@ -25,6 +28,31 @@ class CoinTransactionMonitor {
         });
         
         this.setupKeyListener();
+    }
+
+    clearTxtFiles() {
+        try {
+            // Clear Coin.txt file
+            const coinFilePath = path.join(process.cwd(), 'Coin.txt');
+            if (fs.existsSync(coinFilePath)) {
+                fs.writeFileSync(coinFilePath, '', 'utf8');
+                console.log('🧹 Cleared Coin.txt file');
+            } else {
+                console.log('ℹ️  Coin.txt file does not exist, skipping clear');
+            }
+            
+            // Clear wallets.txt file
+            const walletFilePath = path.join(process.cwd(), 'Dragon', 'data', 'Solana', 'BulkWallet', 'wallets.txt');
+            if (fs.existsSync(walletFilePath)) {
+                fs.writeFileSync(walletFilePath, '', 'utf8');
+                console.log('🧹 Cleared wallets.txt file');
+            } else {
+                console.log('ℹ️  wallets.txt file does not exist, skipping clear');
+            }
+            
+        } catch (error) {
+            console.log('❌ Error clearing .txt files:', error.message);
+        }
     }
 
     setupKeyListener() {
