@@ -324,10 +324,19 @@ class BulkWalletChecker:
         filename = f"1.csv"
         path = f"Dragon/data/Solana/BulkWallet/wallets_{filename}"
 
-        with open(path, 'w', newline='') as outfile:
+        # Check if file exists to determine if we need to write headers
+        file_exists = os.path.exists(path)
+        
+        with open(path, 'a', newline='') as outfile:
             writer = csv.writer(outfile)
-            header = ['Identifier'] + list(next(iter(resultDict.values())).keys())
-            writer.writerow(header)
+            
+            # Only write header if file doesn't exist
+            if not file_exists:
+                header = ['Identifier'] + list(next(iter(resultDict.values())).keys())
+                writer.writerow(header)
+            else:
+                # Get header from existing file to ensure consistency
+                header = ['Identifier'] + list(next(iter(resultDict.values())).keys())
 
             for key, value in resultDict.items():
                 row = [key]
@@ -335,6 +344,9 @@ class BulkWalletChecker:
                     row.append(value.get(h))
                 writer.writerow(row)
 
-        print(f"[🐲] Saved data for {len(resultDict.items())} wallets to {filename}")
+        if file_exists:
+            print(f"[🐲] Appended data for {len(resultDict.items())} wallets to existing {filename}")
+        else:
+            print(f"[🐲] Created new file and saved data for {len(resultDict.items())} wallets to {filename}")
         if filteredCount > 0:
             print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%, USDProfit < $0.01, Fast tx % > 30%, or No buy hold ratio > 30%")
