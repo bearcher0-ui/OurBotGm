@@ -154,7 +154,7 @@ class BulkWalletChecker:
     def processWalletData(self, wallet, data):
         pnl7d = f"{data['pnl_7d']:,.2f}" if data['pnl_7d'] is not None else "-1.23"
         realizedProfit7dUSD = f"${data['realized_profit_7d']:,.2f}" if data['realized_profit_7d'] is not None else "-1.23"
-        winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "-1.23%"
+        winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "-1.23"
         buy7d = f"{data['buy_7d']}" if data['buy_7d'] is not None else "-1.23"
         sell7d = f"{data['sell_7d']}" if data['sell_7d'] is not None else "-1.23"
         tokenNum = f"{data['token_num']}" if data['token_num'] is not None else "-1.23"
@@ -268,49 +268,26 @@ class BulkWalletChecker:
         for result in self.results:
             wallet = result.get('wallet')
             if wallet:
-                # Check all filters
+                # Check winrate filter - exclude wallets with winrate < 40%
                 winrate_str = result.get('Winrate', '0%')
-                usdprofit_str = result.get('USDProfit', '$0.00')
-                fast_tx_str = result.get('Fast tx %', '0%')
-                no_buy_hold_str = result.get('No buy hold ratio', '0%')
-                
                 try:
                     # Extract numeric value from winrate string (e.g., "45.23%" -> 45.23)
                     winrate_value = float(winrate_str.replace('%', ''))
-                    
-                    # Extract numeric value from USDProfit string (e.g., "$123.45" -> 123.45)
-                    usdprofit_value = float(usdprofit_str.replace('$', '').replace(',', ''))
-                    
-                    # Extract numeric value from Fast tx % string (e.g., "25.50%" -> 25.50)
-                    fast_tx_value = float(fast_tx_str.replace('%', ''))
-                    
-                    # Extract numeric value from No buy hold ratio string (e.g., "15.50%" -> 15.50)
-                    no_buy_hold_value = float(no_buy_hold_str.replace('%', ''))
-                    
-                    # Apply all filters: winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, No buy hold ratio <= 20%
-                    if (winrate_value >= 40.0 and usdprofit_value >= 0.01 and 
-                        fast_tx_value <= 30.0 and no_buy_hold_value <= 20.0):
+                    if winrate_value >= 40.0:
                         resultDict[wallet] = result
                         result.pop('wallet', None)
                     else:
                         filteredCount += 1
-                        if winrate_value < 40.0:
-                            print(f"[🐲] Filtered out wallet {wallet} with winrate {winrate_str} (< 40%)")
-                        if usdprofit_value < 0.01:
-                            print(f"[🐲] Filtered out wallet {wallet} with USDProfit {usdprofit_str} (< $0.01)")
-                        if fast_tx_value > 30.0:
-                            print(f"[🐲] Filtered out wallet {wallet} with Fast tx % {fast_tx_str} (> 30%)")
-                        if no_buy_hold_value > 20.0:
-                            print(f"[🐲] Filtered out wallet {wallet} with No buy hold ratio {no_buy_hold_str} (> 20%)")
+                        print(f"[🐲] Filtered out wallet {wallet} with winrate {winrate_str} (< 40%)")
                 except (ValueError, TypeError):
-                    # If values cannot be parsed, include the wallet (safer approach)
+                    # If winrate cannot be parsed, include the wallet (safer approach)
                     resultDict[wallet] = result
                     result.pop('wallet', None)
             else:
                 print(f"[🐲] Missing 'wallet' key in result: {result}")
 
         if not resultDict:
-            print("[🐲] No wallets meet the criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, and No buy hold ratio <= 20%). No CSV file created.")
+            print("[🐲] No wallets meet the winrate criteria (>= 40%). No CSV file created.")
             return
 
         identifier = self.shorten(list(resultDict)[0])
@@ -330,5 +307,4 @@ class BulkWalletChecker:
 
         print(f"[🐲] Saved data for {len(resultDict.items())} wallets to {filename}")
         if filteredCount > 0:
-            print(f"[🐲] Filtered out {filteredCount} wallets that didn't meet the criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, and No buy hold ratio <= 20%)")
-
+            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%")
