@@ -295,14 +295,20 @@ class BulkWalletChecker:
                         result.pop('wallet', None)
                     else:
                         filteredCount += 1
+                        # Collect all failed criteria for a single log message
+                        failed_criteria = []
                         if winrate_value < 40.0:
-                            print(f"[🐲] Filtered out wallet {wallet} with winrate {winrate_str} (< 40%)")
+                            failed_criteria.append(f"winrate {winrate_str} (< 40%)")
                         if usd_profit_value < 0.01:
-                            print(f"[🐲] Filtered out wallet {wallet} with USDProfit {usd_profit_str} (< $0.01)")
+                            failed_criteria.append(f"USDProfit {usd_profit_str} (< $0.01)")
                         if fast_tx_value > 30.0:
-                            print(f"[🐲] Filtered out wallet {wallet} with Fast tx % {fast_tx_str} (> 30%)")
+                            failed_criteria.append(f"Fast tx % {fast_tx_str} (> 30%)")
                         if no_buy_hold_value > 30.0:
-                            print(f"[🐲] Filtered out wallet {wallet} with No buy hold ratio {no_buy_hold_str} (> 30%)")
+                            failed_criteria.append(f"No buy hold ratio {no_buy_hold_str} (> 30%)")
+                        
+                        # Show single log message with all failed criteria
+                        criteria_text = ", ".join(failed_criteria)
+                        print(f"[🐲] Filtered out wallet {wallet} with {criteria_text}")
                 except (ValueError, TypeError):
                     # If values cannot be parsed, include the wallet (safer approach)
                     resultDict[wallet] = result
