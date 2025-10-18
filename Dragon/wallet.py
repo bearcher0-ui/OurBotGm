@@ -152,13 +152,58 @@ class BulkWalletChecker:
             time.sleep(7.5)
 
     def processWalletData(self, wallet, data):
-        directLink = f"http://172.86.110.62:1337/sol/address/{wallet}"
-        totalProfitPercent = f"{data['total_profit_pnl'] * 100:.2f}%" if data['total_profit_pnl'] is not None else "error"
-        realizedProfit7dUSD = f"${data['realized_profit_7d']:,.2f}" if data['realized_profit_7d'] is not None else "error"
-        realizedProfit30dUSD = f"${data['realized_profit_30d']:,.2f}" if data['realized_profit_30d'] is not None else "error"
-        winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "?"
-        solBalance = f"{float(data['sol_balance']):.2f}" if data['sol_balance'] is not None else "?"
-        buy7d = f"{data['buy_7d']}" if data['buy_7d'] is not None else "?"
+        pnl7d = f"{data['pnl_7d']:,.2f}" if data['pnl_7d'] is not None else "-1.23"
+        realizedProfit7dUSD = f"${data['realized_profit_7d']:,.2f}" if data['realized_profit_7d'] is not None else "-1.23"
+        winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "-1.23"
+        buy7d = f"{data['buy_7d']}" if data['buy_7d'] is not None else "-1.23"
+        sell7d = f"{data['sell_7d']}" if data['sell_7d'] is not None else "-1.23"
+        tokenNum = f"{data['token_num']}" if data['token_num'] is not None else "-1.23"
+        pnlLtMinusDot5Num = f"{data['pnl_lt_minus_dot5_num']}" if data['pnl_lt_minus_dot5_num'] is not None else "-1.23"
+        pnlMinusDot5To0xNum = f"{data['pnl_minus_dot5_0x_num']}" if data['pnl_minus_dot5_0x_num'] is not None else "-1.23"
+        pnlLt2xNum = f"{data['pnl_lt_2x_num']}" if data['pnl_lt_2x_num'] is not None else "-1.23"
+        pnl2xTo5xNum = f"{data['pnl_2x_5x_num']}" if data['pnl_2x_5x_num'] is not None else "-1.23"
+        pnlGt5xNum = f"{data['pnl_gt_5x_num']}" if data['pnl_gt_5x_num'] is not None else "-1.23"
+
+        # Calculate percentages for PnL ranges (divided by token_num * 100)
+        try:
+            if data['token_num'] is not None and data['token_num'] != 0:
+                pnlLtMinusDot5Percent = f"{(data['pnl_lt_minus_dot5_num'] / data['token_num'] * 100):.2f}%" if data['pnl_lt_minus_dot5_num'] is not None else "?"
+                pnlMinusDot5To0xPercent = f"{(data['pnl_minus_dot5_0x_num'] / data['token_num'] * 100):.2f}%" if data['pnl_minus_dot5_0x_num'] is not None else "?"
+                pnlLt2xPercent = f"{(data['pnl_lt_2x_num'] / data['token_num'] * 100):.2f}%" if data['pnl_lt_2x_num'] is not None else "?"
+                pnl2xTo5xPercent = f"{(data['pnl_2x_5x_num'] / data['token_num'] * 100):.2f}%" if data['pnl_2x_5x_num'] is not None else "?"
+                pnlGt5xPercent = f"{(data['pnl_gt_5x_num'] / data['token_num'] * 100):.2f}%" if data['pnl_gt_5x_num'] is not None else "?"
+            else:
+                pnlLtMinusDot5Percent = "?"
+                pnlMinusDot5To0xPercent = "?"
+                pnlLt2xPercent = "?"
+                pnl2xTo5xPercent = "?"
+                pnlGt5xPercent = "?"
+        except (TypeError, ZeroDivisionError):
+            pnlLtMinusDot5Percent = "?"
+            pnlMinusDot5To0xPercent = "?"
+            pnlLt2xPercent = "?"
+            pnl2xTo5xPercent = "?"
+            pnlGt5xPercent = "?"
+
+        # Calculate Fast tx % from risk data
+        try:
+            if data.get('risk') is not None and data['risk'].get('fast_tx_ratio') is not None:
+                fast_tx_ratio = data['risk']['fast_tx_ratio']
+                fastTxPercent = f"{fast_tx_ratio * 100:.2f}%"
+            else:
+                fastTxPercent = "?"
+        except (TypeError, KeyError, AttributeError):
+            fastTxPercent = "?"
+
+        # Calculate no_buy_hold_ratio from risk data
+        try:
+            if data.get('risk') is not None and data['risk'].get('no_buy_hold_ratio') is not None:
+                no_buy_hold_ratio = data['risk']['no_buy_hold_ratio']
+                noBuyHoldRatio = f"{no_buy_hold_ratio * 100:.2f}%"
+            else:
+                noBuyHoldRatio = "?"
+        except (TypeError, KeyError, AttributeError):
+            noBuyHoldRatio = "?"
         averageHoldingDuration =  (
             f"{data['avg_holding_peroid']}s" if data['avg_holding_peroid'] < 60 
             else (
@@ -167,30 +212,43 @@ class BulkWalletChecker:
             )
         ) if data['avg_holding_peroid'] is not None else "?"
 
+        # Calculate Single buy = realizedProfit7dUSD/(pnl7d*buy7d)
+        try:
+            if (data['realized_profit_7d'] is not None and 
+                data['pnl_7d'] is not None and 
+                data['buy_7d'] is not None and 
+                data['pnl_7d'] != 0 and 
+                data['buy_7d'] != 0):
+                single_buy = data['realized_profit_7d'] / (data['pnl_7d'] * data['buy_7d'])
+                single_buy_formatted = f"{single_buy:.4f}"
+            else:
+                single_buy_formatted = "error"
+        except (TypeError, ZeroDivisionError):
+            single_buy_formatted = "error"
+
+
         if "Skipped" in data.get("tags", []):
             return {
-                "wallet": wallet,
-                "tags": ["Skipped"],
-                "directLink": directLink
+                "wallet": wallet
             }
-
-        try:
-            tags = data['tags']
-        except Exception:
-            tags = "?"
 
         # Removed any 30d winrate retrieval.
         return {
             "wallet": wallet,
-            "totalProfitPercent": totalProfitPercent,
-            "averageHoldingMins": averageHoldingDuration,
-            "7dUSDProfit": realizedProfit7dUSD,
-            "30dUSDProfit": realizedProfit30dUSD,  # This remains if you want to keep the 30d profit data.
-            "winrate_7d": winrate7d,
-            "tags": tags,
-            "sol_balance": solBalance,
-            "directLink": directLink,
-            "buy_7d": buy7d
+            "PNL (*100%)": pnl7d,
+            "USDProfit": realizedProfit7dUSD,
+            "Winrate": winrate7d,
+            "Single buy": single_buy_formatted,
+            "Number of tokens traded": tokenNum,
+            "Buys": buy7d,
+            "Sell": sell7d,
+            "PnL < -0.5x %": pnlLtMinusDot5Percent,
+            "PnL -0.5x to 0x %": pnlMinusDot5To0xPercent,
+            "PnL < 2x %": pnlLt2xPercent,
+            "PnL 2x to 5x %": pnl2xTo5xPercent,
+            "PnL > 5x %": pnlGt5xPercent,
+            "Fast tx %": fastTxPercent,
+            "No buy hold ratio": noBuyHoldRatio,
         }
     
     def fetchWalletData(self, wallets, threads, skipWallets, useProxies):
@@ -205,16 +263,35 @@ class BulkWalletChecker:
                     self.results.append(result)
 
         resultDict = {}
+        filteredCount = 0
+        
         for result in self.results:
             wallet = result.get('wallet')
             if wallet:
-                resultDict[wallet] = result
-                result.pop('wallet', None)
+                # Check winrate filter - exclude wallets with winrate < 40%
+                winrate_str = result.get('Winrate', '0%')
+                try:
+                    # Extract numeric value from winrate string (e.g., "45.23%" -> 45.23)
+                    winrate_value = float(winrate_str.replace('%', ''))
+                    if winrate_value >= 40.0:
+                        resultDict[wallet] = result
+                        result.pop('wallet', None)
+                    else:
+                        filteredCount += 1
+                        print(f"[🐲] Filtered out wallet {wallet} with winrate {winrate_str} (< 40%)")
+                except (ValueError, TypeError):
+                    # If winrate cannot be parsed, include the wallet (safer approach)
+                    resultDict[wallet] = result
+                    result.pop('wallet', None)
             else:
                 print(f"[🐲] Missing 'wallet' key in result: {result}")
 
+        if not resultDict:
+            print("[🐲] No wallets meet the winrate criteria (>= 40%). No CSV file created.")
+            return
+
         identifier = self.shorten(list(resultDict)[0])
-        filename = f"{identifier}_{random.randint(1111, 9999)}.csv"
+        filename = f"1.csv"
         path = f"Dragon/data/Solana/BulkWallet/wallets_{filename}"
 
         with open(path, 'w', newline='') as outfile:
@@ -229,3 +306,5 @@ class BulkWalletChecker:
                 writer.writerow(row)
 
         print(f"[🐲] Saved data for {len(resultDict.items())} wallets to {filename}")
+        if filteredCount > 0:
+            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%")
