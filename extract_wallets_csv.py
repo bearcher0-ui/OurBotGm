@@ -3,15 +3,14 @@ import os
 import sys
 
 
-def extract_wallet_column(
+def extract_wallet_column_all(
 	input_csv_path: str,
 	output_txt_path: str,
-
 ) -> None:
 	"""Extract the 'wallet' column from a CSV and write it line-by-line to a .txt file.
-
+	
 	- Column match is case-insensitive; prefers 'Identifier' if present, otherwise 'wallet'.
-	- Writes each wallet value on its own line with no extra whitespace.
+	- Writes ALL values including empty ones to preserve exact row count.
 	"""
 
 	if not os.path.isfile(input_csv_path):
@@ -41,13 +40,24 @@ def extract_wallet_column(
 			)
 
 		with open(output_txt_path, mode="w", encoding="utf-8", newline="") as out_file:
+			row_count = 0
+			non_empty_count = 0
+			
 			for row in reader:
+				row_count += 1
 				value = row.get(target_col, "")
 				if value is None:
 					value = ""
 				value = str(value).strip()
+				
+				# Write ALL values, even empty ones
+				out_file.write(value + "\n")
 				if value:
-					out_file.write(value + "\n")
+					non_empty_count += 1
+			
+			print(f"Processed {row_count} rows from CSV")
+			print(f"Wrote {row_count} values to TXT file (including empty ones)")
+			print(f"Non-empty values: {non_empty_count}")
 
 
 def _default_paths() -> tuple[str, str]:
@@ -71,7 +81,7 @@ def _default_paths() -> tuple[str, str]:
 
 if __name__ == "__main__":
 	# Usage:
-	#   python extract_wallets_csv.py [input_csv] [output_txt]
+	#   python extract_wallets_csv_all.py [input_csv] [output_txt]
 	# If no arguments are provided, defaults under Dragon/data/Solana/BulkWallet are used.
 	if len(sys.argv) >= 2:
 		in_path = sys.argv[1]
@@ -79,7 +89,5 @@ if __name__ == "__main__":
 	else:
 		in_path, out_path = _default_paths()
 
-	extract_wallet_column(in_path, out_path)
-	print(f"Wrote wallet column to: {out_path}")
-
-
+	extract_wallet_column_all(in_path, out_path)
+	print(f"Wrote all values to: {out_path}")
