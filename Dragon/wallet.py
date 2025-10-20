@@ -21,7 +21,6 @@ class BulkWalletChecker:
         self.totalGrabbed = 0
         self.totalFailed = 0
         self.results = []
-        self.walletCache = {}
 
     def randomise(self):
         self.identifier = random.choice(
@@ -103,10 +102,6 @@ class BulkWalletChecker:
         return proxy
 
     def getWalletData(self, wallet: str, skipWallets: bool, useProxies):
-        if wallet in self.walletCache:
-            print(f"[🐲] Loaded cached data for wallet {wallet}.")
-            return self.walletCache[wallet]
-
         url = f"http://172.86.110.62:1337/defi/quotation/v1/smartmoney/sol/walletNew/{wallet}?period=7d"
         
         while True:
@@ -136,7 +131,6 @@ class BulkWalletChecker:
                                 self.totalGrabbed += 1
                                 print(f"[🐲] Successfully grabbed data for {wallet} ({self.totalGrabbed})")
                                 result = self.processWalletData(wallet, data)
-                                self.walletCache[wallet] = result
                                 return result
                             else:
                                 self.skippedWallets += 1
@@ -144,7 +138,6 @@ class BulkWalletChecker:
                                 return None
                         else:
                             result = self.processWalletData(wallet, data)
-                            self.walletCache[wallet] = result
                             return result
             except Exception as e:
                 self.totalFailed += 1
