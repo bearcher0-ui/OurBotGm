@@ -6,8 +6,7 @@ import sys
 def extract_wallet_column(
 	input_csv_path: str,
 	output_txt_path: str,
-)
--> None:
+) -> None:
 	"""Extract the 'wallet' column from a CSV and write it line-by-line to a .txt file.
 
 	- Column match is case-insensitive; the first column named 'wallet' (any case) is used.
