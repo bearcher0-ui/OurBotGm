@@ -6,10 +6,11 @@ import sys
 def extract_wallet_column(
 	input_csv_path: str,
 	output_txt_path: str,
+
 ) -> None:
 	"""Extract the 'wallet' column from a CSV and write it line-by-line to a .txt file.
 
-	- Column match is case-insensitive; the first column named 'wallet' (any case) is used.
+	- Column match is case-insensitive; prefers 'Identifier' if present, otherwise 'wallet'.
 	- Writes each wallet value on its own line with no extra whitespace.
 	"""
 
@@ -24,22 +25,24 @@ def extract_wallet_column(
 		if reader.fieldnames is None:
 			raise ValueError("CSV appears to have no header row (fieldnames are missing).")
 
-		# Find 'wallet' column (case-insensitive)
-		wallet_col = None
-		for name in reader.fieldnames:
-			if name is not None and name.strip().lower() == "wallet":
-				wallet_col = name
+		# Find target column (case-insensitive): prefer 'Identifier', else 'wallet'
+		target_col = None
+		preferred = ["identifier", "wallet"]
+		lower_to_actual = {fn.strip().lower(): fn for fn in reader.fieldnames if fn is not None}
+		for key in preferred:
+			if key in lower_to_actual:
+				target_col = lower_to_actual[key]
 				break
 
-		if wallet_col is None:
+		if target_col is None:
 			raise KeyError(
-				"Could not find a 'wallet' column in CSV. Columns present: "
+				"Could not find an 'Identifier' or 'wallet' column in CSV. Columns present: "
 				+ ", ".join(reader.fieldnames)
 			)
 
 		with open(output_txt_path, mode="w", encoding="utf-8", newline="") as out_file:
 			for row in reader:
-				value = row.get(wallet_col, "")
+				value = row.get(target_col, "")
 				if value is None:
 					value = ""
 				value = str(value).strip()
