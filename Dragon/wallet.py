@@ -163,6 +163,7 @@ class BulkWalletChecker:
         pnlLt2xNum = f"{data['pnl_lt_2x_num']}" if data['pnl_lt_2x_num'] is not None else "-1.23"
         pnl2xTo5xNum = f"{data['pnl_2x_5x_num']}" if data['pnl_2x_5x_num'] is not None else "-1.23"
         pnlGt5xNum = f"{data['pnl_gt_5x_num']}" if data['pnl_gt_5x_num'] is not None else "-1.23"
+        solBalance = f"{data['sol_balance']}" if data.get('sol_balance') is not None else "0"
 
         # Calculate percentages for PnL ranges (divided by token_num * 100)
         try:
@@ -249,6 +250,7 @@ class BulkWalletChecker:
             "PnL > 5x %": pnlGt5xPercent,
             "Fast tx %": fastTxPercent,
             "No buy hold ratio": noBuyHoldRatio,
+            "SOL balance": solBalance,
         }
     
     def fetchWalletData(self, wallets, threads, skipWallets, useProxies):
@@ -273,6 +275,7 @@ class BulkWalletChecker:
                 usd_profit_str = result.get('USDProfit', '$0.00')
                 fast_tx_str = result.get('Fast tx %', '0%')
                 no_buy_hold_str = result.get('No buy hold ratio', '0%')
+                sol_balance_str = result.get('SOL balance', '0')
                 
                 try:
                     # Extract numeric value from winrate string (e.g., "45.23%" -> 45.23)
@@ -286,11 +289,15 @@ class BulkWalletChecker:
                     
                     # Extract numeric value from No buy hold ratio string (e.g., "15.30%" -> 15.30)
                     no_buy_hold_value = float(no_buy_hold_str.replace('%', ''))
-                    
+
+                    # Extract numeric value for SOL balance
+                    sol_balance_value = float(str(sol_balance_str).replace(',', ''))
+
                     if (winrate_value >= 40.0 and 
                         usd_profit_value >= 0.01 and 
                         fast_tx_value <= 30.0 and 
-                        no_buy_hold_value <= 30.0):
+                        no_buy_hold_value <= 30.0 and 
+                        sol_balance_value > 0.0):
                         resultDict[wallet] = result
                         result.pop('wallet', None)
                     else:
@@ -305,6 +312,8 @@ class BulkWalletChecker:
                             failed_criteria.append(f"Fast tx % {fast_tx_str} (> 30%)")
                         if no_buy_hold_value > 30.0:
                             failed_criteria.append(f"No buy hold ratio {no_buy_hold_str} (> 30%)")
+                        if sol_balance_value <= 0.0:
+                            failed_criteria.append(f"SOL balance {sol_balance_str} (= 0)")
                         
                         # Show single log message with all failed criteria
                         criteria_text = ", ".join(failed_criteria)
@@ -317,7 +326,7 @@ class BulkWalletChecker:
                 print(f"[🐲] Missing 'wallet' key in result: {result}")
 
         if not resultDict:
-            print("[🐲] No wallets meet the filtering criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, and No buy hold ratio <= 30%). No CSV file created.")
+            print("[🐲] No wallets meet the filtering criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, No buy hold ratio <= 30%, and SOL balance > 0). No CSV file created.")
             return
 
         identifier = self.shorten(list(resultDict)[0])
