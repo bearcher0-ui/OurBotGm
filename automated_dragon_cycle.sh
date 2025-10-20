@@ -43,7 +43,7 @@ run_dragon() {
     cat > dragon_input.txt << EOF
 1
 2
-2
+3
 7
 n
 n
