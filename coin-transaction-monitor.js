@@ -18,9 +18,6 @@ class CoinTransactionMonitor {
         this.tokenActivityTimers = new Map(); // Track last activity time for each token
         this.inactiveTimeout = 3 * 60 * 1000; // 3 minutes in milliseconds
         
-        // Clear .txt files when code is initiated
-        this.clearTxtFiles();
-        
         // Setup readline for key press detection
         this.rl = readline.createInterface({
             input: process.stdin,
@@ -28,31 +25,6 @@ class CoinTransactionMonitor {
         });
         
         this.setupKeyListener();
-    }
-
-    clearTxtFiles() {
-        try {
-            // Clear Coin.txt file
-            const coinFilePath = path.join(process.cwd(), 'Coin.txt');
-            if (fs.existsSync(coinFilePath)) {
-                fs.writeFileSync(coinFilePath, '', 'utf8');
-                console.log('🧹 Cleared Coin.txt file');
-            } else {
-                console.log('ℹ️  Coin.txt file does not exist, skipping clear');
-            }
-            
-            // Clear wallets.txt file
-            const walletFilePath = path.join(process.cwd(), 'Dragon', 'data', 'Solana', 'BulkWallet', 'wallets.txt');
-            if (fs.existsSync(walletFilePath)) {
-                fs.writeFileSync(walletFilePath, '', 'utf8');
-                console.log('🧹 Cleared wallets.txt file');
-            } else {
-                console.log('ℹ️  wallets.txt file does not exist, skipping clear');
-            }
-            
-        } catch (error) {
-            console.log('❌ Error clearing .txt files:', error.message);
-        }
     }
 
     setupKeyListener() {
@@ -187,6 +159,13 @@ class CoinTransactionMonitor {
     }
 
     extractAndSaveTraderPublicKeys(message) {
+        // Check if marketCapSol is present and greater than 300
+        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
+        if (marketCapSol && marketCapSol > 300) {
+            console.log(`🚫 Skipping trader key extraction - MarketCapSol (${marketCapSol}) is greater than 300`);
+            return;
+        }
+        
         // Recursively search for traderPublicKey in the message object
         const extractKeys = (obj, path = '') => {
             if (typeof obj !== 'object' || obj === null) return;
@@ -270,6 +249,12 @@ class CoinTransactionMonitor {
     }
 
     subscribeToNewTokens() {
+        // Check if WebSocket is ready to send messages
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            console.log(`⚠️  WebSocket not ready (state: ${this.ws ? this.ws.readyState : 'null'}). Cannot subscribe to new tokens.`);
+            return;
+        }
+
         const payload = {
             method: "subscribeNewToken"
         };
@@ -279,6 +264,12 @@ class CoinTransactionMonitor {
     }
 
     subscribeToMigrations() {
+        // Check if WebSocket is ready to send messages
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            console.log(`⚠️  WebSocket not ready (state: ${this.ws ? this.ws.readyState : 'null'}). Cannot subscribe to migrations.`);
+            return;
+        }
+
         const payload = {
             method: "subscribeMigration"
         };
@@ -288,6 +279,12 @@ class CoinTransactionMonitor {
     }
 
     subscribeToTokenTrades(tokenAddresses) {
+        // Check if WebSocket is ready to send messages
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            console.log(`⚠️  WebSocket not ready (state: ${this.ws ? this.ws.readyState : 'null'}). Cannot subscribe to token trades.`);
+            return;
+        }
+
         // Filter out tokens we're already tracking
         const newTokens = tokenAddresses.filter(address => !this.trackedTokens.has(address));
         
@@ -322,6 +319,12 @@ class CoinTransactionMonitor {
     }
 
     subscribeToAccountTrades(accountAddresses) {
+        // Check if WebSocket is ready to send messages
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            console.log(`⚠️  WebSocket not ready (state: ${this.ws ? this.ws.readyState : 'null'}). Cannot subscribe to account trades.`);
+            return;
+        }
+
         const payload = {
             method: "subscribeAccountTrade",
             keys: accountAddresses
@@ -342,13 +345,18 @@ class CoinTransactionMonitor {
         
         // Set up a timer to check for inactivity
         const checkInactivity = () => {
+            // Check if the token is still being tracked and WebSocket is connected
+            if (!this.trackedTokens.has(tokenAddress) || !this.isRunning) {
+                return; // Stop checking if token is no longer tracked or connection is down
+            }
+            
             const lastActivity = this.tokenActivityTimers.get(tokenAddress);
             const now = Date.now();
             
             if (lastActivity && (now - lastActivity) >= this.inactiveTimeout) {
                 console.log(`⏰ Token ${tokenAddress} has been inactive for 3+ minutes. Unsubscribing...`);
                 this.unsubscribeFromTokenTrades([tokenAddress]);
-            } else if (this.trackedTokens.has(tokenAddress)) {
+            } else if (this.trackedTokens.has(tokenAddress) && this.isRunning) {
                 // Continue checking every 30 seconds
                 setTimeout(checkInactivity, 30000);
             }
@@ -366,6 +374,17 @@ class CoinTransactionMonitor {
     }
 
     unsubscribeFromTokenTrades(tokenAddresses) {
+        // Check if WebSocket is ready to send messages
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            console.log(`⚠️  WebSocket not ready (state: ${this.ws ? this.ws.readyState : 'null'}). Cannot unsubscribe from tokens.`);
+            // Still remove from tracking even if we can't send the unsubscribe message
+            tokenAddresses.forEach(address => {
+                this.trackedTokens.delete(address);
+                this.tokenActivityTimers.delete(address);
+            });
+            return;
+        }
+
         const payload = {
             method: "unsubscribeTokenTrade",
             keys: tokenAddresses
@@ -390,6 +409,15 @@ class CoinTransactionMonitor {
     unsubscribeFromAllTokens() {
         if (this.trackedTokens.size === 0) {
             console.log('ℹ️  No tokens to unsubscribe from');
+            return;
+        }
+
+        // Check if WebSocket is ready to send messages
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            console.log(`⚠️  WebSocket not ready (state: ${this.ws ? this.ws.readyState : 'null'}). Cannot unsubscribe from all tokens.`);
+            // Still clear tracking even if we can't send the unsubscribe message
+            this.trackedTokens.clear();
+            this.tokenActivityTimers.clear();
             return;
         }
 
@@ -418,6 +446,14 @@ class CoinTransactionMonitor {
     unsubscribeFromAllAccounts() {
         if (this.trackedAccounts.size === 0) {
             console.log('ℹ️  No accounts to unsubscribe from');
+            return;
+        }
+
+        // Check if WebSocket is ready to send messages
+        if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+            console.log(`⚠️  WebSocket not ready (state: ${this.ws ? this.ws.readyState : 'null'}). Cannot unsubscribe from all accounts.`);
+            // Still clear tracking even if we can't send the unsubscribe message
+            this.trackedAccounts.clear();
             return;
         }
 
@@ -571,17 +607,23 @@ class CoinTransactionMonitor {
                                message.user ||
                                message.creator;
         
-        // Save trader public key to wallets.txt if available
-        if (traderPublicKey && traderPublicKey !== 'Unknown') {
-            console.log(`👤 Detected trader: ${traderPublicKey}`);
-            this.saveTraderWalletToFile(traderPublicKey);
-        }
-        
-        // Also check for traderPublicKey in the message data
-        const messageTraderPublicKey = message.traderPublicKey || message.data?.traderPublicKey || message.result?.traderPublicKey;
-        if (messageTraderPublicKey && messageTraderPublicKey !== 'Unknown' && messageTraderPublicKey !== traderPublicKey) {
-            console.log(`🔑 Detected additional trader public key: ${messageTraderPublicKey}`);
-            this.saveTraderWalletToFile(messageTraderPublicKey);
+        // Check marketCapSol before saving trader keys
+        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
+        if (marketCapSol && marketCapSol > 300) {
+            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
+        } else {
+            // Save trader public key to wallets.txt if available
+            if (traderPublicKey && traderPublicKey !== 'Unknown') {
+                console.log(`👤 Detected trader: ${traderPublicKey}`);
+                this.saveTraderWalletToFile(traderPublicKey);
+            }
+            
+            // Also check for traderPublicKey in the message data
+            const messageTraderPublicKey = message.traderPublicKey || message.data?.traderPublicKey || message.result?.traderPublicKey;
+            if (messageTraderPublicKey && messageTraderPublicKey !== 'Unknown' && messageTraderPublicKey !== traderPublicKey) {
+                console.log(`🔑 Detected additional trader public key: ${messageTraderPublicKey}`);
+                this.saveTraderWalletToFile(messageTraderPublicKey);
+            }
         }
         
         if (tokenAddress) {
@@ -629,11 +671,17 @@ class CoinTransactionMonitor {
         console.log('Amount:', migrationInfo.amount || 'Unknown');
         console.log('Trader:', migrationInfo.trader || migrationInfo.traderPublicKey || 'Unknown');
         
-        // Save trader public key to wallets.txt if available
-        const migrationTrader = migrationInfo.trader || migrationInfo.traderPublicKey || message.traderPublicKey;
-        if (migrationTrader && migrationTrader !== 'Unknown') {
-            console.log(`🔑 Detected trader in migration: ${migrationTrader}`);
-            this.saveTraderWalletToFile(migrationTrader);
+        // Check marketCapSol before saving trader keys
+        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
+        if (marketCapSol && marketCapSol > 300) {
+            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
+        } else {
+            // Save trader public key to wallets.txt if available
+            const migrationTrader = migrationInfo.trader || migrationInfo.traderPublicKey || message.traderPublicKey;
+            if (migrationTrader && migrationTrader !== 'Unknown') {
+                console.log(`🔑 Detected trader in migration: ${migrationTrader}`);
+                this.saveTraderWalletToFile(migrationTrader);
+            }
         }
         
         if (this.debugMode) {
@@ -667,17 +715,23 @@ class CoinTransactionMonitor {
             console.log('Market Cap:', tradeData.marketCap || 'Unknown');
         }
         
-        // Save trader wallet address to wallets.txt if available
-        if (traderAddress && traderAddress !== 'Unknown') {
-            console.log(`👤 Detected trader in trade: ${traderAddress}`);
-            this.saveTraderWalletToFile(traderAddress);
-        }
-        
-        // Also save traderPublicKey if it's different from traderAddress
-        const traderPublicKey = tradeData.traderPublicKey || message.traderPublicKey;
-        if (traderPublicKey && traderPublicKey !== 'Unknown' && traderPublicKey !== traderAddress) {
-            console.log(`🔑 Detected trader public key: ${traderPublicKey}`);
-            this.saveTraderWalletToFile(traderPublicKey);
+        // Check marketCapSol before saving trader keys
+        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
+        if (marketCapSol && marketCapSol > 300) {
+            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
+        } else {
+            // Save trader wallet address to wallets.txt if available
+            if (traderAddress && traderAddress !== 'Unknown') {
+                console.log(`👤 Detected trader in trade: ${traderAddress}`);
+                this.saveTraderWalletToFile(traderAddress);
+            }
+            
+            // Also save traderPublicKey if it's different from traderAddress
+            const traderPublicKey = tradeData.traderPublicKey || message.traderPublicKey;
+            if (traderPublicKey && traderPublicKey !== 'Unknown' && traderPublicKey !== traderAddress) {
+                console.log(`🔑 Detected trader public key: ${traderPublicKey}`);
+                this.saveTraderWalletToFile(traderPublicKey);
+            }
         }
         
         // Update activity timer for this token
@@ -709,16 +763,22 @@ class CoinTransactionMonitor {
             console.log('Price:', tradeData.price || tradeData.solAmount || 'Unknown');
         }
         
-        // Save account wallet address to wallets.txt if available
-        if (accountAddress && accountAddress !== 'Unknown') {
-            this.saveTraderWalletToFile(accountAddress);
-        }
-        
-        // Also save traderPublicKey if available and different from accountAddress
-        const traderPublicKey = tradeData.traderPublicKey || message.traderPublicKey;
-        if (traderPublicKey && traderPublicKey !== 'Unknown' && traderPublicKey !== accountAddress) {
-            console.log(`🔑 Detected trader public key in account trade: ${traderPublicKey}`);
-            this.saveTraderWalletToFile(traderPublicKey);
+        // Check marketCapSol before saving trader keys
+        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
+        if (marketCapSol && marketCapSol > 300) {
+            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
+        } else {
+            // Save account wallet address to wallets.txt if available
+            if (accountAddress && accountAddress !== 'Unknown') {
+                this.saveTraderWalletToFile(accountAddress);
+            }
+            
+            // Also save traderPublicKey if available and different from accountAddress
+            const traderPublicKey = tradeData.traderPublicKey || message.traderPublicKey;
+            if (traderPublicKey && traderPublicKey !== 'Unknown' && traderPublicKey !== accountAddress) {
+                console.log(`🔑 Detected trader public key in account trade: ${traderPublicKey}`);
+                this.saveTraderWalletToFile(traderPublicKey);
+            }
         }
         
         if (this.debugMode) {
@@ -797,10 +857,22 @@ class CoinTransactionMonitor {
     }
 
     reconnect() {
+        console.log('🔄 Initiating reconnection...');
+        
+        // Close existing connection if it exists
         if (this.ws) {
             this.ws.close();
+            this.ws = null;
         }
+        
+        // Reset connection state
+        this.isRunning = false;
         this.connectionAttempts = 0;
+        
+        // Clear any existing timers to prevent them from trying to send messages
+        this.tokenActivityTimers.clear();
+        
+        // Attempt to reconnect
         this.connect().catch(console.error);
     }
 
