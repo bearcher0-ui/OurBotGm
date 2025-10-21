@@ -150,6 +150,16 @@ class BulkWalletChecker:
         winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "-1.23"
         buy7d = f"{data['buy_7d']}" if data['buy_7d'] is not None else "-1.23"
         sell7d = f"{data['sell_7d']}" if data['sell_7d'] is not None else "-1.23"
+        
+        # Calculate Traded = Buys + Sell
+        try:
+            if data['buy_7d'] is not None and data['sell_7d'] is not None:
+                traded = data['buy_7d'] + data['sell_7d']
+                traded7d = f"{traded}"
+            else:
+                traded7d = "-1.23"
+        except (TypeError, ValueError):
+            traded7d = "-1.23"
         tokenNum = f"{data['token_num']}" if data['token_num'] is not None else "-1.23"
         pnlLtMinusDot5Num = f"{data['pnl_lt_minus_dot5_num']}" if data['pnl_lt_minus_dot5_num'] is not None else "-1.23"
         pnlMinusDot5To0xNum = f"{data['pnl_minus_dot5_0x_num']}" if data['pnl_minus_dot5_0x_num'] is not None else "-1.23"
@@ -233,6 +243,7 @@ class BulkWalletChecker:
             "USDProfit": realizedProfit7dUSD,
             "Winrate": winrate7d,
             "Single buy": single_buy_formatted,
+            "Traded": traded7d,
             "Number of tokens traded": tokenNum,
             "Buys": buy7d,
             "Sell": sell7d,
@@ -269,6 +280,7 @@ class BulkWalletChecker:
                 fast_tx_str = result.get('Fast tx %', '0%')
                 no_buy_hold_str = result.get('No buy hold ratio', '0%')
                 sol_balance_str = result.get('SOL balance', '0')
+                traded_str = result.get('Traded', '0')
                 
                 try:
                     # Extract numeric value from winrate string (e.g., "45.23%" -> 45.23)
@@ -286,11 +298,15 @@ class BulkWalletChecker:
                     # Extract numeric value for SOL balance
                     sol_balance_value = float(str(sol_balance_str).replace(',', ''))
 
+                    # Extract numeric value for Traded
+                    traded_value = float(str(traded_str).replace(',', ''))
+
                     if (winrate_value >= 40.0 and 
                         usd_profit_value >= 0.01 and 
                         fast_tx_value <= 30.0 and 
                         no_buy_hold_value <= 30.0 and 
-                        sol_balance_value > 0.0):
+                        sol_balance_value > 0.0 and
+                        traded_value >= 70.0):
                         resultDict[wallet] = result
                         result.pop('wallet', None)
                     else:
@@ -307,10 +323,12 @@ class BulkWalletChecker:
                             failed_criteria.append(f"No buy hold ratio {no_buy_hold_str} (> 30%)")
                         if sol_balance_value <= 0.0:
                             failed_criteria.append(f"SOL balance {sol_balance_str} (= 0)")
+                        if traded_value < 70.0:
+                            failed_criteria.append(f"Traded {traded_str} (< 70)")
                         
                         # Show single log message with all failed criteria
                         criteria_text = ", ".join(failed_criteria)
-                        print(f"[🐲] Filtered out wallet {wallet} with {criteria_text}")
+                        # print(f"[🐲] Filtered out wallet {wallet} with {criteria_text}")
                 except (ValueError, TypeError):
                     # If values cannot be parsed, include the wallet (safer approach)
                     resultDict[wallet] = result
@@ -319,7 +337,7 @@ class BulkWalletChecker:
                 print(f"[🐲] Missing 'wallet' key in result: {result}")
 
         if not resultDict:
-            print("[🐲] No wallets meet the filtering criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, No buy hold ratio <= 30%, and SOL balance > 0). No CSV file created.")
+            print("[🐲] No wallets meet the filtering criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, No buy hold ratio <= 30%, SOL balance > 0, and Traded >= 70). No CSV file created.")
             return
 
         identifier = self.shorten(list(resultDict)[0])
@@ -351,4 +369,4 @@ class BulkWalletChecker:
         else:
             print(f"[🐲] Created new file and saved data for {len(resultDict.items())} wallets to {filename}")
         if filteredCount > 0:
-            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%, USDProfit < $0.01, Fast tx % > 30%, or No buy hold ratio > 30%")
+            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%, USDProfit < $0.01, Fast tx % > 30%, No buy hold ratio > 30%, SOL balance = 0, or Traded < 70")
