@@ -148,7 +148,8 @@ class CoinTransactionMonitor {
             const fileContent = walletsArray.join('\n') + '\n';
             
             fs.writeFileSync(walletFilePath, fileContent, 'utf8');
-            console.log(`💾 Saved new trader wallet: ${walletAddress}`);
+            // Suppress wallet saving messages for cleaner output
+            // console.log(`💾 Saved new trader wallet: ${walletAddress}`);
             return true; // Wallet was saved
             
         } catch (error) {
@@ -174,7 +175,8 @@ class CoinTransactionMonitor {
                 const currentPath = path ? `${path}.${key}` : key;
                 
                 if (key === 'traderPublicKey' && typeof value === 'string' && value !== 'Unknown') {
-                    console.log(`🔑 Found traderPublicKey at ${currentPath}: ${value}`);
+                    // Suppress trader key extraction messages for cleaner output
+                    // console.log(`🔑 Found traderPublicKey at ${currentPath}: ${value}`);
                     this.saveTraderWalletToFile(value);
                 } else if (typeof value === 'object' && value !== null) {
                     extractKeys(value, currentPath);
@@ -485,11 +487,11 @@ class CoinTransactionMonitor {
             // Extract and save all traderPublicKey values from the message
             this.extractAndSaveTraderPublicKeys(message);
             
-            // Debug mode: log all messages
-            if (this.debugMode) {
-                console.log('\n🔍 DEBUG - Raw message received:');
-                console.log(JSON.stringify(message, null, 2));
-            }
+            // Debug mode: log all messages (suppressed for cleaner output)
+            // if (this.debugMode) {
+            //     console.log('\n🔍 DEBUG - Raw message received:');
+            //     console.log(JSON.stringify(message, null, 2));
+            // }
             
             // Handle different message types
             if (message.method === 'subscribeNewToken') {
@@ -518,27 +520,28 @@ class CoinTransactionMonitor {
                 this.handleMigration(message);
             }
             else {
-                console.log('\n📨 UNHANDLED MESSAGE TYPE');
-                console.log('-'.repeat(40));
-                console.log('Timestamp:', new Date().toISOString());
-                console.log('Message Type:', message.method || 'Unknown');
-                console.log('Message ID:', message.id || 'No ID');
+                // Suppress unhandled message type output for cleaner console
+                // console.log('\n📨 UNHANDLED MESSAGE TYPE');
+                // console.log('-'.repeat(40));
+                // console.log('Timestamp:', new Date().toISOString());
+                // console.log('Message Type:', message.method || 'Unknown');
+                // console.log('Message ID:', message.id || 'No ID');
                 
-                // Try to extract any useful information
-                if (message.data) {
-                    console.log('Data Keys:', Object.keys(message.data).join(', '));
-                }
-                if (message.result) {
-                    console.log('Result Keys:', Object.keys(message.result).join(', '));
-                }
+                // Try to extract any useful information (silently)
+                // if (message.data) {
+                //     console.log('Data Keys:', Object.keys(message.data).join(', '));
+                // }
+                // if (message.result) {
+                //     console.log('Result Keys:', Object.keys(message.result).join(', '));
+                // }
                 
-                if (this.debugMode) {
-                    console.log('\n🔍 DEBUG - Full Message:');
-                    console.log(JSON.stringify(message, null, 2));
-                } else {
-                    console.log('(Use "d" to enable debug mode for full message details)');
-                }
-                console.log('-'.repeat(40));
+                // if (this.debugMode) {
+                //     console.log('\n🔍 DEBUG - Full Message:');
+                //     console.log(JSON.stringify(message, null, 2));
+                // } else {
+                //     console.log('(Use "d" to enable debug mode for full message details)');
+                // }
+                // console.log('-'.repeat(40));
             }
         } catch (error) {
             console.error('❌ Error parsing message:', error);
@@ -584,10 +587,11 @@ class CoinTransactionMonitor {
         console.log('Creator:', tokenInfo.creator || tokenInfo.traderPublicKey || 'Unknown');
         console.log('Description:', tokenInfo.description || 'No description');
         
-        if (this.debugMode) {
-            console.log('\n🔍 DEBUG - Full Message:');
-            console.log(JSON.stringify(message, null, 2));
-        }
+        // Suppress debug messages for cleaner output
+        // if (this.debugMode) {
+        //     console.log('\n🔍 DEBUG - Full Message:');
+        //     console.log(JSON.stringify(message, null, 2));
+        // }
         console.log('='.repeat(60));
         
         // Extract token address from the message if available (try multiple possible fields)
@@ -684,10 +688,11 @@ class CoinTransactionMonitor {
             }
         }
         
-        if (this.debugMode) {
-            console.log('\n🔍 DEBUG - Full Message:');
-            console.log(JSON.stringify(message, null, 2));
-        }
+        // Suppress debug messages for cleaner output
+        // if (this.debugMode) {
+        //     console.log('\n🔍 DEBUG - Full Message:');
+        //     console.log(JSON.stringify(message, null, 2));
+        // }
         console.log('-'.repeat(40));
     }
 
@@ -739,10 +744,11 @@ class CoinTransactionMonitor {
             this.updateTokenActivity(tokenAddress);
         }
         
-        if (this.debugMode) {
-            console.log('\n🔍 DEBUG - Full Message:');
-            console.log(JSON.stringify(message, null, 2));
-        }
+        // Suppress debug messages for cleaner output
+        // if (this.debugMode) {
+        //     console.log('\n🔍 DEBUG - Full Message:');
+        //     console.log(JSON.stringify(message, null, 2));
+        // }
         console.log('-'.repeat(40));
     }
 
@@ -781,10 +787,11 @@ class CoinTransactionMonitor {
             }
         }
         
-        if (this.debugMode) {
-            console.log('\n🔍 DEBUG - Full Message:');
-            console.log(JSON.stringify(message, null, 2));
-        }
+        // Suppress debug messages for cleaner output
+        // if (this.debugMode) {
+        //     console.log('\n🔍 DEBUG - Full Message:');
+        //     console.log(JSON.stringify(message, null, 2));
+        // }
         console.log('-'.repeat(40));
     }
 
