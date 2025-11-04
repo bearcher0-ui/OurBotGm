@@ -36,7 +36,7 @@ stop_coin_monitor() {
 # Function to run Dragon with automated input
 run_dragon() {
     echo "[INFO] Starting Dragon Wallet Checker"
-    echo "[INFO] Automated sequence: 1 -> 2 -> 2 -> 7 -> n -> n -> n -> 10"
+    echo "[INFO] Automated sequence: 1 -> 2 -> 2 -> 7 -> n -> n -> 10"
     echo
     
     # Create input file for automated Dragon interaction
