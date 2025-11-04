@@ -89,13 +89,6 @@ def promptSkipWallets():
             return choice == "Y"
         print("[🐲] Invalid input.")
 
-def promptDebugFailedCriteria():
-    while True:
-        choice = input("[❓] Enable debug for failed criteria (Y/N) > ").strip().upper()
-        if choice in ["Y", "N"]:
-            return choice == "Y"
-        print("[🐲] Invalid input.")
-
 def gmgn():
     gmgnInstance = GMGN()
     options, optionsChoice = utils.choices(chain="GMGN")
@@ -163,8 +156,6 @@ def eth():
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 skipWallets = promptSkipWallets()
-                if hasattr(walletCheck, "enableDebug"):
-                    walletCheck.enableDebug(promptDebugFailedCriteria())
                 walletCheck.fetchWalletData(wallets, threads=threads, skipWallets=skipWallets, useProxies=useProxies)
                 print(optionsChoice)
             elif optInput == 3:
@@ -240,8 +231,6 @@ def solana():
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 skipWallets = promptSkipWallets()
-                if hasattr(walletCheck, "enableDebug"):
-                    walletCheck.enableDebug(promptDebugFailedCriteria())
                 walletCheck.fetchWalletData(wallets, threads=threads, skipWallets=skipWallets, useProxies=useProxies)
                 print(optionsChoice)
             elif optInput == 3:
@@ -324,8 +313,6 @@ def bsc():
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 skipWallets = promptSkipWallets()
-                if hasattr(walletCheck, "enableDebug"):
-                    walletCheck.enableDebug(promptDebugFailedCriteria())
                 walletCheck.fetchWalletData(wallets, threads=threads, skipWallets=skipWallets, useProxies=useProxies)
                 print(optionsChoice)
             elif optInput == 2:
