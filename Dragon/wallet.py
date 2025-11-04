@@ -322,8 +322,8 @@ class BulkWalletChecker:
                         failed_criteria = []
                         if winrate_value < 40.0:
                             failed_criteria.append(f"winrate {winrate_str} (< 40%)")
-                    if usd_profit_value < 0.001:
-                        failed_criteria.append(f"USDProfit {usd_profit_str} (< $0.001)")
+                        if usd_profit_value < 0.001:
+                            failed_criteria.append(f"USDProfit {usd_profit_str} (< $0.001)")
                         if fast_tx_value > 30.0:
                             failed_criteria.append(f"Fast tx % {fast_tx_str} (> 30%)")
                         if no_buy_hold_value > 30.0:
@@ -335,8 +335,8 @@ class BulkWalletChecker:
                         
                         # Show single log message with all failed criteria
                         criteria_text = ", ".join(failed_criteria)
-                    if self.debug and criteria_text:
-                        print(f"[🐲] Filtered wallet {wallet}: {criteria_text}")
+                        if self.debug and criteria_text:
+                            print(f"[🐲] Filtered wallet {wallet}: {criteria_text}")
                 except (ValueError, TypeError):
                     # If values cannot be parsed, include the wallet (safer approach)
                     resultDict[wallet] = result
@@ -345,7 +345,7 @@ class BulkWalletChecker:
                 print(f"[🐲] Missing 'wallet' key in result: {result}")
 
         if not resultDict:
-            print("[🐲] No wallets meet the filtering criteria (winrate >= 40%, USDProfit >= $0.01, Fast tx % <= 30%, No buy hold ratio <= 30%, SOL balance > 0, and Traded >= 70). No CSV file created.")
+            print("[🐲] No wallets meet the filtering criteria (winrate >= 40%, USDProfit >= $0.001, Fast tx % <= 30%, No buy hold ratio <= 30%, SOL balance > 0, and Traded >= 70). No CSV file created.")
             return
 
         identifier = self.shorten(list(resultDict)[0])
@@ -377,4 +377,4 @@ class BulkWalletChecker:
         else:
             print(f"[🐲] Created new file and saved data for {len(resultDict.items())} wallets to {filename}")
         if filteredCount > 0:
-            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%, USDProfit < $0.01, Fast tx % > 30%, No buy hold ratio > 30%, SOL balance = 0, or Traded < 70")
+            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%, USDProfit < $0.001, Fast tx % > 30%, No buy hold ratio > 30%, SOL balance = 0, or Traded < 70")
