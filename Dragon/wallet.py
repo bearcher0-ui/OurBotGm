@@ -21,11 +21,6 @@ class BulkWalletChecker:
         self.totalGrabbed = 0
         self.totalFailed = 0
         self.results = []
-        self.debug = False
-
-    def enableDebug(self, enabled: bool = True):
-        self.debug = enabled
-        return self
 
     def randomise(self):
         self.identifier = random.choice(
@@ -139,8 +134,6 @@ class BulkWalletChecker:
                                 return result
                             else:
                                 self.skippedWallets += 1
-                                if self.debug:
-                                    print(f"[🐲] Skipping wallet {wallet} due to buy_30d <= 0")
                                 print(f"[🐲] Skipped {self.skippedWallets} wallets", end="\r")
                                 return None
                         else:
@@ -276,77 +269,16 @@ class BulkWalletChecker:
                     self.results.append(result)
 
         resultDict = {}
-        filteredCount = 0
         
         for result in self.results:
             wallet = result.get('wallet')
             if wallet:
-                # Check all filters - exclude wallets that don't meet criteria
-                winrate_str = result.get('Winrate', '0%')
-                usd_profit_str = result.get('USDProfit', '$0.00')
-                fast_tx_str = result.get('Fast tx %', '0%')
-                no_buy_hold_str = result.get('No buy hold ratio', '0%')
-                sol_balance_str = result.get('SOL balance', '0')
-                traded_str = result.get('Traded', '0')
-                
-                try:
-                    # Extract numeric value from winrate string (e.g., "45.23%" -> 45.23)
-                    winrate_value = float(winrate_str.replace('%', ''))
-                    
-                    # Extract numeric value from USDProfit string (e.g., "$123.45" -> 123.45)
-                    usd_profit_value = float(usd_profit_str.replace('$', '').replace(',', ''))
-                    
-                    # Extract numeric value from Fast tx % string (e.g., "25.50%" -> 25.50)
-                    fast_tx_value = float(fast_tx_str.replace('%', ''))
-                    
-                    # Extract numeric value from No buy hold ratio string (e.g., "15.30%" -> 15.30)
-                    no_buy_hold_value = float(no_buy_hold_str.replace('%', ''))
-
-                    # Extract numeric value for SOL balance
-                    sol_balance_value = float(str(sol_balance_str).replace(',', ''))
-
-                    # Extract numeric value for Traded
-                    traded_value = float(str(traded_str).replace(',', ''))
-
-                    if (winrate_value >= 40.0 and 
-                        usd_profit_value >= 0.001 and 
-                        fast_tx_value <= 30.0 and 
-                        no_buy_hold_value <= 30.0 and 
-                        sol_balance_value > 0.0 and
-                        traded_value >= 70.0):
-                        resultDict[wallet] = result
-                        result.pop('wallet', None)
-                    else:
-                        filteredCount += 1
-                        # Collect all failed criteria for a single log message
-                        failed_criteria = []
-                        if winrate_value < 40.0:
-                            failed_criteria.append(f"winrate {winrate_str} (< 40%)")
-                        if usd_profit_value < 0.001:
-                            failed_criteria.append(f"USDProfit {usd_profit_str} (< $0.001)")
-                        if fast_tx_value > 30.0:
-                            failed_criteria.append(f"Fast tx % {fast_tx_str} (> 30%)")
-                        if no_buy_hold_value > 30.0:
-                            failed_criteria.append(f"No buy hold ratio {no_buy_hold_str} (> 30%)")
-                        if sol_balance_value <= 0.0:
-                            failed_criteria.append(f"SOL balance {sol_balance_str} (= 0)")
-                        if traded_value < 70.0:
-                            failed_criteria.append(f"Traded {traded_str} (< 70)")
-                        
-                        # Show single log message with all failed criteria
-                        criteria_text = ", ".join(failed_criteria)
-                        if self.debug and criteria_text:
-                            print(f"[🐲] Filtered wallet {wallet}: {criteria_text}")
-                except (ValueError, TypeError):
-                    # If values cannot be parsed, include the wallet (safer approach)
-                    resultDict[wallet] = result
-                    result.pop('wallet', None)
+                resultDict[wallet] = result
+                result.pop('wallet', None)
             else:
                 print(f"[🐲] Missing 'wallet' key in result: {result}")
 
-        if not resultDict:
-            print("[🐲] No wallets meet the filtering criteria (winrate >= 40%, USDProfit >= $0.001, Fast tx % <= 30%, No buy hold ratio <= 30%, SOL balance > 0, and Traded >= 70). No CSV file created.")
-            return
+        # Proceed even if resultDict is empty; no filters applied
 
         identifier = self.shorten(list(resultDict)[0])
         filename = f"1.csv"
@@ -376,5 +308,4 @@ class BulkWalletChecker:
             print(f"[🐲] Appended data for {len(resultDict.items())} wallets to existing {filename}")
         else:
             print(f"[🐲] Created new file and saved data for {len(resultDict.items())} wallets to {filename}")
-        if filteredCount > 0:
-            print(f"[🐲] Filtered out {filteredCount} wallets with winrate < 40%, USDProfit < $0.001, Fast tx % > 30%, No buy hold ratio > 30%, SOL balance = 0, or Traded < 70")
+        # No filtering summary since all filters have been removed
