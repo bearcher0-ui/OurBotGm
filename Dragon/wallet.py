@@ -153,7 +153,7 @@ class BulkWalletChecker:
 
     def processWalletData(self, wallet, data):
         pnl7d = f"{data['pnl_7d']:,.2f}" if data['pnl_7d'] is not None else "-1.23"
-        realizedProfit7dUSD = f"${data['realized_profit_7d']:,.2f}" if data['realized_profit_7d'] is not None else "-1.23"
+        realizedProfit7dUSD = f"{data['realized_profit_7d']:.2f}" if data['realized_profit_7d'] is not None else "-1.23"
         winrate7d = f"{data['winrate'] * 100:.2f}%" if data['winrate'] is not None else "-1.23"
         buy7d = f"{data['buy_7d']}" if data['buy_7d'] is not None else "-1.23"
         sell7d = f"{data['sell_7d']}" if data['sell_7d'] is not None else "-1.23"
@@ -238,6 +238,26 @@ class BulkWalletChecker:
             single_buy_formatted = "error"
 
 
+        # Calculate Koefficient = USDProfit / (Single buy * Traded / 10)
+        try:
+            if (
+                realizedProfit7dUSD != "-1.23" and
+                single_buy_formatted != "error" and
+                traded7d != "-1.23"
+            ):
+                usd_profit_numeric = float(str(realizedProfit7dUSD).replace(',', ''))
+                single_buy_numeric = float(single_buy_formatted)
+                traded_numeric = float(traded7d)
+                denominator = (single_buy_numeric * traded_numeric) / 10.0
+                if denominator != 0:
+                    koefficient_formatted = f"{(usd_profit_numeric / denominator):.2f}"
+                else:
+                    koefficient_formatted = "error"
+            else:
+                koefficient_formatted = "error"
+        except (ValueError, TypeError, ZeroDivisionError):
+            koefficient_formatted = "error"
+
         if "Skipped" in data.get("tags", []):
             return {
                 "wallet": wallet
@@ -247,6 +267,7 @@ class BulkWalletChecker:
         return {
             "wallet": wallet,
             "PNL (*100%)": pnl7d,
+            "Koefficient": koefficient_formatted,
             "USDProfit": realizedProfit7dUSD,
             "Winrate": winrate7d,
             "Single buy": single_buy_formatted,
