@@ -43,7 +43,7 @@ run_dragon() {
     cat > dragon_input.txt << EOF
 1
 2
-3
+2
 7
 n
 n
@@ -78,11 +78,11 @@ start_cycle() {
         
         # Display progress every 100 wallets
         if [ $((WALLET_COUNT % 100)) -eq 0 ] && [ $WALLET_COUNT -gt 0 ]; then
-            echo "[INFO] Current wallet count: $WALLET_COUNT / 4000"
+            echo "[INFO] Current wallet count: $WALLET_COUNT / 12000"
         fi
         
         # Check if we have reached 4000 wallets
-        if [ $WALLET_COUNT -ge 4000 ]; then
+        if [ $WALLET_COUNT -ge 12000 ]; then
             echo "[INFO] Target reached! Stopping coin monitor and starting Dragon..."
             echo
             

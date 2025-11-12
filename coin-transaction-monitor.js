@@ -160,13 +160,6 @@ class CoinTransactionMonitor {
     }
 
     extractAndSaveTraderPublicKeys(message) {
-        // Check if marketCapSol is present and greater than 300
-        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key extraction - MarketCapSol (${marketCapSol}) is greater than 300`);
-            return;
-        }
-        
         // Recursively search for traderPublicKey in the message object
         const extractKeys = (obj, path = '') => {
             if (typeof obj !== 'object' || obj === null) return;
@@ -611,23 +604,17 @@ class CoinTransactionMonitor {
                                message.user ||
                                message.creator;
         
-        // Check marketCapSol before saving trader keys
-        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
-        } else {
-            // Save trader public key to wallets.txt if available
-            if (traderPublicKey && traderPublicKey !== 'Unknown') {
-                console.log(`👤 Detected trader: ${traderPublicKey}`);
-                this.saveTraderWalletToFile(traderPublicKey);
-            }
-            
-            // Also check for traderPublicKey in the message data
-            const messageTraderPublicKey = message.traderPublicKey || message.data?.traderPublicKey || message.result?.traderPublicKey;
-            if (messageTraderPublicKey && messageTraderPublicKey !== 'Unknown' && messageTraderPublicKey !== traderPublicKey) {
-                console.log(`🔑 Detected additional trader public key: ${messageTraderPublicKey}`);
-                this.saveTraderWalletToFile(messageTraderPublicKey);
-            }
+        // Save trader public key to wallets.txt if available
+        if (traderPublicKey && traderPublicKey !== 'Unknown') {
+            console.log(`👤 Detected trader: ${traderPublicKey}`);
+            this.saveTraderWalletToFile(traderPublicKey);
+        }
+        
+        // Also check for traderPublicKey in the message data
+        const messageTraderPublicKey = message.traderPublicKey || message.data?.traderPublicKey || message.result?.traderPublicKey;
+        if (messageTraderPublicKey && messageTraderPublicKey !== 'Unknown' && messageTraderPublicKey !== traderPublicKey) {
+            console.log(`🔑 Detected additional trader public key: ${messageTraderPublicKey}`);
+            this.saveTraderWalletToFile(messageTraderPublicKey);
         }
         
         if (tokenAddress) {
@@ -675,17 +662,11 @@ class CoinTransactionMonitor {
         console.log('Amount:', migrationInfo.amount || 'Unknown');
         console.log('Trader:', migrationInfo.trader || migrationInfo.traderPublicKey || 'Unknown');
         
-        // Check marketCapSol before saving trader keys
-        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
-        } else {
-            // Save trader public key to wallets.txt if available
-            const migrationTrader = migrationInfo.trader || migrationInfo.traderPublicKey || message.traderPublicKey;
-            if (migrationTrader && migrationTrader !== 'Unknown') {
-                console.log(`🔑 Detected trader in migration: ${migrationTrader}`);
-                this.saveTraderWalletToFile(migrationTrader);
-            }
+        // Save trader public key to wallets.txt if available
+        const migrationTrader = migrationInfo.trader || migrationInfo.traderPublicKey || message.traderPublicKey;
+        if (migrationTrader && migrationTrader !== 'Unknown') {
+            console.log(`🔑 Detected trader in migration: ${migrationTrader}`);
+            this.saveTraderWalletToFile(migrationTrader);
         }
         
         // Suppress debug messages for cleaner output
@@ -720,23 +701,17 @@ class CoinTransactionMonitor {
             console.log('Market Cap:', tradeData.marketCap || 'Unknown');
         }
         
-        // Check marketCapSol before saving trader keys
-        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
-        } else {
-            // Save trader wallet address to wallets.txt if available
-            if (traderAddress && traderAddress !== 'Unknown') {
-                console.log(`👤 Detected trader in trade: ${traderAddress}`);
-                this.saveTraderWalletToFile(traderAddress);
-            }
-            
-            // Also save traderPublicKey if it's different from traderAddress
-            const traderPublicKey = tradeData.traderPublicKey || message.traderPublicKey;
-            if (traderPublicKey && traderPublicKey !== 'Unknown' && traderPublicKey !== traderAddress) {
-                console.log(`🔑 Detected trader public key: ${traderPublicKey}`);
-                this.saveTraderWalletToFile(traderPublicKey);
-            }
+        // Save trader wallet address to wallets.txt if available
+        if (traderAddress && traderAddress !== 'Unknown') {
+            console.log(`👤 Detected trader in trade: ${traderAddress}`);
+            this.saveTraderWalletToFile(traderAddress);
+        }
+        
+        // Also save traderPublicKey if it's different from traderAddress
+        const traderPublicKey = tradeData.traderPublicKey || message.traderPublicKey;
+        if (traderPublicKey && traderPublicKey !== 'Unknown' && traderPublicKey !== traderAddress) {
+            console.log(`🔑 Detected trader public key: ${traderPublicKey}`);
+            this.saveTraderWalletToFile(traderPublicKey);
         }
         
         // Update activity timer for this token
@@ -769,22 +744,16 @@ class CoinTransactionMonitor {
             console.log('Price:', tradeData.price || tradeData.solAmount || 'Unknown');
         }
         
-        // Check marketCapSol before saving trader keys
-        const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
-        } else {
-            // Save account wallet address to wallets.txt if available
-            if (accountAddress && accountAddress !== 'Unknown') {
-                this.saveTraderWalletToFile(accountAddress);
-            }
-            
-            // Also save traderPublicKey if available and different from accountAddress
-            const traderPublicKey = tradeData.traderPublicKey || message.traderPublicKey;
-            if (traderPublicKey && traderPublicKey !== 'Unknown' && traderPublicKey !== accountAddress) {
-                console.log(`🔑 Detected trader public key in account trade: ${traderPublicKey}`);
-                this.saveTraderWalletToFile(traderPublicKey);
-            }
+        // Save account wallet address to wallets.txt if available
+        if (accountAddress && accountAddress !== 'Unknown') {
+            this.saveTraderWalletToFile(accountAddress);
+        }
+        
+        // Also save traderPublicKey if available and different from accountAddress
+        const traderPublicKey = tradeData.traderPublicKey || message.traderPublicKey;
+        if (traderPublicKey && traderPublicKey !== 'Unknown' && traderPublicKey !== accountAddress) {
+            console.log(`🔑 Detected trader public key in account trade: ${traderPublicKey}`);
+            this.saveTraderWalletToFile(traderPublicKey);
         }
         
         // Suppress debug messages for cleaner output
