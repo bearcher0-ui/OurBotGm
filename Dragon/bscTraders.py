@@ -102,7 +102,7 @@ class BscTopTraders:
         return proxy
 
     def fetchTopTraders(self, contractAddress: str, useProxies):
-        url = f"http://172.86.110.62:1337/defi/quotation/v1/tokens/top_traders/bsc/{contractAddress}?orderby=profit&direction=desc"
+        url = f"http://172.86.110.62:1337/vas/api/v1/token_traders/bsc/{contractAddress}?orderby=realized_profit&direction=desc"
         retries = 3
 
         for attempt in range(retries):
