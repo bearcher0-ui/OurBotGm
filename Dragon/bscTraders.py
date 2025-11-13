@@ -102,7 +102,7 @@ class BscTopTraders:
         return proxy
 
     def fetchTopTraders(self, contractAddress: str, useProxies):
-        url = f"http://172.86.110.62:1337/vas/api/v1/token_traders/bsc/{contractAddress}?orderby=realized_profit&direction=desc"
+        url = f"http://172.86.110.62:1337/defi/quotation/v1/tokens/top_traders/bsc/{contractAddress}?orderby=profit&direction=desc"
         retries = 3
 
         for attempt in range(retries):
@@ -111,7 +111,9 @@ class BscTopTraders:
                 proxy = self.getNextProxy() if useProxies else None
                 self.configureProxy(proxy)
                 response = self.sendRequest.get(url, headers=self.headers, allow_redirects=True)
-                data = response.json().get('data', None).get('list', None)
+                json_data = response.json()
+                data_obj = json_data.get('data', None)
+                data = data_obj.get('list', None) if data_obj else None
                 if data:
                     return data
             except Exception as e:
@@ -158,6 +160,10 @@ class BscTopTraders:
                         }
         
         repeatedAddresses = [address for address, count in self.addressFrequency.items() if count > 1]
+        
+        if not self.allAddresses:
+            print("[🐲] No addresses found to process.")
+            return
         
         identifier = self.shorten(list(self.allAddresses)[0])
         
