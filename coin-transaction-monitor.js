@@ -160,10 +160,10 @@ class CoinTransactionMonitor {
     }
 
     extractAndSaveTraderPublicKeys(message) {
-        // Check if marketCapSol is present and greater than 300
+        // Check if marketCapSol is present and greater than 400
         const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key extraction - MarketCapSol (${marketCapSol}) is greater than 300`);
+        if (marketCapSol && marketCapSol > 400) {
+            console.log(`🚫 Skipping trader key extraction - MarketCapSol (${marketCapSol}) is greater than 400`);
             return;
         }
         
@@ -360,7 +360,7 @@ class CoinTransactionMonitor {
                 this.unsubscribeFromTokenTrades([tokenAddress]);
             } else if (this.trackedTokens.has(tokenAddress) && this.isRunning) {
                 // Continue checking every 30 seconds
-                setTimeout(checkInactivity, 30000);
+                setTimeout(checkInactivity, 00);
             }
         };
         
@@ -613,8 +613,8 @@ class CoinTransactionMonitor {
         
         // Check marketCapSol before saving trader keys
         const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
+        if (marketCapSol && marketCapSol > 400) {
+            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 400`);
         } else {
             // Save trader public key to wallets.txt if available
             if (traderPublicKey && traderPublicKey !== 'Unknown') {
@@ -677,8 +677,8 @@ class CoinTransactionMonitor {
         
         // Check marketCapSol before saving trader keys
         const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
+        if (marketCapSol && marketCapSol > 400) {
+            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 400`);
         } else {
             // Save trader public key to wallets.txt if available
             const migrationTrader = migrationInfo.trader || migrationInfo.traderPublicKey || message.traderPublicKey;
@@ -722,8 +722,8 @@ class CoinTransactionMonitor {
         
         // Check marketCapSol before saving trader keys
         const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
+        if (marketCapSol && marketCapSol > 400) {
+            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 400`);
         } else {
             // Save trader wallet address to wallets.txt if available
             if (traderAddress && traderAddress !== 'Unknown') {
@@ -771,8 +771,8 @@ class CoinTransactionMonitor {
         
         // Check marketCapSol before saving trader keys
         const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 300) {
-            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 300`);
+        if (marketCapSol && marketCapSol > 400) {
+            console.log(`🚫 Skipping trader key saving - MarketCapSol (${marketCapSol}) is greater than 400`);
         } else {
             // Save account wallet address to wallets.txt if available
             if (accountAddress && accountAddress !== 'Unknown') {
