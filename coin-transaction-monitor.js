@@ -160,10 +160,10 @@ class CoinTransactionMonitor {
     }
 
     extractAndSaveTraderPublicKeys(message) {
-        // Check if marketCapSol is present and greater than 400
+        // Check if marketCapSol is present and greater than 4
         const marketCapSol = message.marketCapSol || message.data?.marketCapSol || message.result?.marketCapSol;
-        if (marketCapSol && marketCapSol > 400) {
-            console.log(`🚫 Skipping trader key extraction - MarketCapSol (${marketCapSol}) is greater than 400`);
+        if (marketCapSol && marketCapSol > 4) {
+            console.log(`🚫 Skipping trader key extraction - MarketCapSol (${marketCapSol}) is greater than 4`);
             return;
         }
         
@@ -213,7 +213,7 @@ class CoinTransactionMonitor {
                 // Attempt to reconnect if not manually closed
                 if (this.connectionAttempts < this.maxReconnectAttempts) {
                     this.connectionAttempts++;
-                    console.log(`🔄 Attempting to reconnect (${this.connectionAttempts}/${this.maxReconnectAttempts}) in ${this.reconnectDelay/1000} seconds...`);
+                    console.log(`🔄 Attempting to reconnect (${this.connectionAttempts}/${this.maxReconnectAttempts}) in ${this.reconnectDelay/10} seconds...`);
                     setTimeout(() => {
                         this.connect().catch(console.error);
                     }, this.reconnectDelay);
@@ -360,7 +360,7 @@ class CoinTransactionMonitor {
                 this.unsubscribeFromTokenTrades([tokenAddress]);
             } else if (this.trackedTokens.has(tokenAddress) && this.isRunning) {
                 // Continue checking every 30 seconds
-                setTimeout(checkInactivity, 00);
+                setTimeout(checkInactivity, 0);
             }
         };
         
