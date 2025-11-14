@@ -69,7 +69,7 @@ start_cycle() {
     # Start coin monitor
     start_coin_monitor
     
-    echo "[INFO] Monitoring wallets.txt for 4000 lines..."
+    echo "[INFO] Monitoring wallets.txt for 6000 lines..."
     echo "[INFO] Current wallet count: 0"
     
     # Monitor wallets
@@ -78,11 +78,11 @@ start_cycle() {
         
         # Display progress every 100 wallets
         if [ $((WALLET_COUNT % 100)) -eq 0 ] && [ $WALLET_COUNT -gt 0 ]; then
-            echo "[INFO] Current wallet count: $WALLET_COUNT / 4000"
+            echo "[INFO] Current wallet count: $WALLET_COUNT / 6000"
         fi
         
-        # Check if we have reached 4000 wallets
-        if [ $WALLET_COUNT -ge 4000 ]; then
+        # Check if we have reached 6000 wallets
+        if [ $WALLET_COUNT -ge 6000 ]; then
             echo "[INFO] Target reached! Stopping coin monitor and starting Dragon..."
             echo
             
