@@ -18,20 +18,14 @@ class TimestampTransactions:
 
     def randomise(self):
         self.identifier = random.choice(
-            [
-                browser
-                for browser in tls_client.settings.ClientIdentifiers.__args__
-                if browser.startswith(('chrome', 'safari', 'firefox', 'opera'))
-            ]
+            [browser for browser in tls_client.settings.ClientIdentifiers.__args__
+             if browser.startswith(('chrome', 'safari', 'firefox', 'opera'))]
         )
         parts = self.identifier.split('_')
-        identifier, version, *_ = parts
+        identifier, version, *rest = parts
         identifier = identifier.capitalize()
-
-        self.sendRequest = tls_client.Session(
-            random_tls_extension_order=True,
-            client_identifier=self.identifier,
-        )
+        
+        self.sendRequest = tls_client.Session(random_tls_extension_order=True, client_identifier=self.identifier)
         self.sendRequest.timeout_seconds = 60
 
         if identifier == 'Opera':
@@ -117,7 +111,7 @@ class TimestampTransactions:
         return {}
 
     def getMintTimestamp(self, contractAddress, useProxies):
-        url = f"http://172.86.110.62:1337/vas/api/v1/token_trades/sol/{contractAddress}"
+        url = f"http://172.86.110.62:1337/defi/quotation/v1/tokens/sol/{contractAddress}"
         retries = 3
 
         for attempt in range(retries):

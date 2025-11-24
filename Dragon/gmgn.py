@@ -12,14 +12,11 @@ class GMGN:
 
     def randomise(self):
         self.identifier = random.choice(
-            [
-                browser
-                for browser in tls_client.settings.ClientIdentifiers.__args__
-                if browser.startswith(('chrome', 'safari', 'firefox', 'opera'))
-            ]
+            [browser for browser in tls_client.settings.ClientIdentifiers.__args__
+             if browser.startswith(('chrome', 'safari', 'firefox', 'opera'))]
         )
         parts = self.identifier.split('_')
-        identifier, version, *_ = parts
+        identifier, version, *rest = parts
         identifier = identifier.capitalize()
         
         self.sendRequest = tls_client.Session(random_tls_extension_order=True, client_identifier=self.identifier)

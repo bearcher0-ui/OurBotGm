@@ -143,7 +143,6 @@ class TopHolders:
                 self.configureProxy(proxy)
                 response = self.sendRequest.get(url, headers=self.headers, allow_redirects=True)
                 
-                # 429 Handling
                 if response.status_code == 429:
                     print(f"[🐲] Received 429 for top holders of {contractAddress}. Triggering global cooldown for 7.5 seconds...")
                     globalRatelimitEvent.set()
@@ -202,10 +201,6 @@ class TopHolders:
                         }
 
         repeatedAddresses = [address for address, count in self.addressFrequency.items() if count > 1]
-
-        if not self.allAddresses:
-            print("[🐲] No top holder addresses met the criteria; skipping file export.")
-            return
 
         identifier = self.shorten(list(self.allAddresses)[0])
 

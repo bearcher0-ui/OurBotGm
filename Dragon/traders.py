@@ -173,11 +173,7 @@ class TopTraders:
                         }
         
         repeatedAddresses = [address for address, count in self.addressFrequency.items() if count > 1]
-
-        if not self.allAddresses:
-            print("[🐲] No top trader addresses met the criteria; skipping file export.")
-            return
-
+        
         identifier = self.shorten(list(self.allAddresses)[0])
         
         with open(f'Dragon/data/Solana/TopTraders/allTopAddresses_{identifier}.txt', 'w') as av:
