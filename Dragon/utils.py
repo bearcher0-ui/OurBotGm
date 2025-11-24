@@ -13,7 +13,7 @@ def clear() -> None:
     os.system("cls||clear")
 
 def banner() -> str:
-    return f"""{Fore.RED}
+    return rf"""{Fore.RED}
 WELCOME TO..
 
    (  )   /\   _                 (     
