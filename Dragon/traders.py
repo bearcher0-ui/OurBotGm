@@ -104,7 +104,7 @@ class TopTraders:
         return proxy
 
     def fetchTopTraders(self, contractAddress: str, useProxies):
-        url = f"http://172.86.110.62:1337/vas/api/v1/token_traders/sol/{contractAddress}?orderby=realized_profit&direction=desc&limit=100"
+        url = f"http://172.86.110.62:1337/defi/quotation/v1/tokens/top_traders/sol/{contractAddress}?orderby=profit&direction=desc"
         retries = 3
 
         for attempt in range(retries):
@@ -125,7 +125,7 @@ class TopTraders:
                     globalRatelimitEvent.clear()
                     continue
 
-                data = response.json().get('data', None).get("list", None)
+                data = response.json().get('data', None)
                 if data:
                     print(f"[🐲] Successfully grabbed top traders for {contractAddress}")
                     return data

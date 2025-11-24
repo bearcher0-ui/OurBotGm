@@ -1,8 +1,5 @@
 import os
-import io
 import glob
-import zipfile
-import requests
 from typing import List, Tuple, Union
 
 from colorama import Fore, init
@@ -39,16 +36,12 @@ def checkProxyFile() -> bool:
 
 
 def chains() -> Tuple[List[str], str]:
-    options = ["Solana", "Ethereum", "Binance Smart Chain", "GMGN Tools", "Update"]
+    options = ["Solana", "Ethereum", "Binance Smart Chain", "GMGN Tools"]
     optionsChoice = "[🐲] Please select a chain:\n\n" + "\n".join(
         [f"[{Fore.RED}{index + 1}{Fore.WHITE}] {option}" for index, option in enumerate(options)]
     )
     return options, optionsChoice
 
-def selectContractAddressInput():
-    print(f"\n[{Fore.RED}1{Fore.WHITE}] Manual input (paste one or multiple separated by commas)")
-    print(f"[{Fore.RED}2{Fore.WHITE}] Choose a file from Dragon/data/Solana")
-    print(f"[{Fore.RED}3{Fore.WHITE}] Enter a custom file path\n")
 
 def gmgnTools(site: str) -> Union[Tuple[List[str], str], str]:
     siteLower = site.lower()
@@ -184,23 +177,4 @@ def purgeFiles(chain: str) -> None:
                             pass
                     else:
                         os.remove(filePath)
-
-
-def updateDragon() -> None:
-    zipUrl = "https://github.com/1f1n/Dragon/archive/refs/heads/main.zip"
-    response = requests.get(zipUrl)
-    response.raise_for_status()
-
-    with zipfile.ZipFile(io.BytesIO(response.content)) as zipObj:
-        root = zipObj.namelist()[0].split("/")[0] + "/"
-        for member in zipObj.namelist():
-            if member.endswith("/"):
-                continue
-            relPath = member[len(root):]
-            target = os.path.join(".", relPath)
-            os.makedirs(os.path.dirname(target), exist_ok=True)
-            with zipObj.open(member) as src, open(target, "wb") as dst:
-                dst.write(src.read())
-
-    print(f"[🐲] Successfully updated Dragon.")
 
