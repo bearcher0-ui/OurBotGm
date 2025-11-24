@@ -34,8 +34,11 @@ WELCOME TO..
 
 def checkProxyFile() -> bool:
     proxyPath = os.path.join("Dragon", "data", "Proxies", "proxies.txt")
-    with open(proxyPath, "r", encoding="utf-8") as fileObj:
-        return bool(fileObj.readlines())
+    try:
+        with open(proxyPath, "r", encoding="utf-8") as fileObj:
+            return bool(fileObj.readlines())
+    except FileNotFoundError:
+        return False
 
 
 def chains() -> Tuple[List[str], str]:
@@ -45,6 +48,11 @@ def chains() -> Tuple[List[str], str]:
     )
     return options, optionsChoice
 
+def selectContractAddressInput():
+
+    print(f"\n[{Fore.RED}1{Fore.WHITE}] Manual input (paste one or multiple separated by commas)")
+    print(f"[{Fore.RED}2{Fore.WHITE}] Choose a file from Dragon/data/Solana")
+    print(f"[{Fore.RED}3{Fore.WHITE}] Enter a custom file path\n")
 
 def gmgnTools(site: str) -> Union[Tuple[List[str], str], str]:
     siteLower = site.lower()
