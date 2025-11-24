@@ -41,10 +41,11 @@ def getProxiesSetting():
 
 def getSolanaContracts():
     utils.selectContractAddressInput()
-    while True:
 
+    while True:
         try:
             method = int(input("[❓] Choice > ").strip())
+
             if method == 1:
                 entry = input("[🐲] Enter contract address(es), comma separated > ").strip()
                 items = [e.strip() for e in entry.split(",") if len(e.strip()) > 0]
@@ -52,8 +53,10 @@ def getSolanaContracts():
                     print(f"[🐲] Loaded {len(items)} contract(s).")
                     return items
                 print("[🐲] No valid contracts entered.")
+
             elif method == 2:
                 return selectFile("Solana")
+
             elif method == 3:
                 filePath = input("[🐲] Enter full file path > ").strip()
                 try:
@@ -65,10 +68,13 @@ def getSolanaContracts():
                     print("[🐲] File is empty.")
                 except Exception as e:
                     print(f"[🐲] Error loading file: {e}")
+
             else:
                 print("[🐲] Invalid choice.")
+
         except ValueError:
             print("[🐲] Invalid input, try again.")
+
 
 def selectFile(chainName):
     filesChoice, files = utils.searchForTxt(chain=chainName)
@@ -106,10 +112,9 @@ def selectFile(chainName):
             print(f"[🐲] File error: {e}")
 
 
-def getContractAddress(expectedLengths, chainName=None):
+def getContractAddress(expectedLengths):
     while True:
-        promptLabel = f"[❓] {chainName} Contract Address > " if chainName else "[❓] Contract Address > "
-        address = input(promptLabel).strip()
+        address = input("[❓] Contract Address > ").strip()
         if len(address) in expectedLengths:
             return address
         print(f"[🐲] Invalid length. Expected one of: {expectedLengths}")
@@ -117,13 +122,6 @@ def getContractAddress(expectedLengths, chainName=None):
 def promptSkipWallets():
     while True:
         choice = input("[❓] Skip wallets with no buys in 30d (Y/N)> ").strip().upper()
-        if choice in ["Y", "N"]:
-            return choice == "Y"
-        print("[🐲] Invalid input.")
-
-def promptDebugFailedCriteria():
-    while True:
-        choice = input("[❓] Enable debug for failed criteria (Y/N) > ").strip().upper()
         if choice in ["Y", "N"]:
             return choice == "Y"
         print("[🐲] Invalid input.")
@@ -195,8 +193,6 @@ def eth():
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 skipWallets = promptSkipWallets()
-                if hasattr(walletCheck, "enableDebug"):
-                    walletCheck.enableDebug(promptDebugFailedCriteria())
                 walletCheck.fetchWalletData(wallets, threads=threads, skipWallets=skipWallets, useProxies=useProxies)
                 print(optionsChoice)
             elif optInput == 3:
@@ -211,13 +207,13 @@ def eth():
                     print("[🐲] Tokens file is empty.")
                 print(optionsChoice)
             elif optInput == 4:
-                contractAddress = getContractAddress([40, 41, 42], chainName="Ethereum")
+                contractAddress = getContractAddress("Ethereum", [40, 41, 42])
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 scanInstance.getAllTxMakers(contractAddress, threads, useProxies)
                 print(optionsChoice)
             elif optInput == 5:
-                contractAddress = getContractAddress([40, 41, 42], chainName="Ethereum")
+                contractAddress = getContractAddress("Ethereum", [40, 41, 42])
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 print("[🐲] Get UNIX Timestamps here > https://www.unixtimestamp.com")
@@ -272,8 +268,6 @@ def solana():
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 skipWallets = promptSkipWallets()
-                if hasattr(walletCheck, "enableDebug"):
-                    walletCheck.enableDebug(promptDebugFailedCriteria())
                 walletCheck.fetchWalletData(wallets, threads=threads, skipWallets=skipWallets, useProxies=useProxies)
                 print(optionsChoice)
             elif optInput == 3:
@@ -304,7 +298,6 @@ def solana():
                 contractAddresses = getSolanaContracts()
                 threads = getThreads()
                 useProxies = getProxiesSetting()
-
                 topHoldersInstance.topHolderData(contractAddresses, threads, useProxies)
                 print(optionsChoice)
             elif optInput == 8:
@@ -351,8 +344,6 @@ def bsc():
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 skipWallets = promptSkipWallets()
-                if hasattr(walletCheck, "enableDebug"):
-                    walletCheck.enableDebug(promptDebugFailedCriteria())
                 walletCheck.fetchWalletData(wallets, threads=threads, skipWallets=skipWallets, useProxies=useProxies)
                 print(optionsChoice)
             elif optInput == 2:
