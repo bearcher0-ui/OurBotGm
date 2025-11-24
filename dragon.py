@@ -2,7 +2,7 @@ from Dragon import (
     BundleFinder, ScanAllTx, BulkWalletChecker, TopTraders, TimestampTransactions,
     CopyTradeWalletFinder, TopHolders, EarlyBuyers,
     EthBulkWalletChecker, EthTopTraders, EthTimestampTransactions, EthScanAllTx,
-    utils, purgeFiles, checkProxyFile, updateDragon,
+    utils, checkProxyFile, updateDragon,
     BscBulkWalletChecker, BscTopTraders,
     gmgnTools, GMGN
 )
@@ -38,6 +38,37 @@ def getProxiesSetting():
             return False
         else:
             print("[🐲] Invalid input. Please enter Y or N.")
+
+def getSolanaContracts():
+    utils.selectContractAddressInput()
+    while True:
+
+        try:
+            method = int(input("[❓] Choice > ").strip())
+            if method == 1:
+                entry = input("[🐲] Enter contract address(es), comma separated > ").strip()
+                items = [e.strip() for e in entry.split(",") if len(e.strip()) > 0]
+                if items:
+                    print(f"[🐲] Loaded {len(items)} contract(s).")
+                    return items
+                print("[🐲] No valid contracts entered.")
+            elif method == 2:
+                return selectFile("Solana")
+            elif method == 3:
+                filePath = input("[🐲] Enter full file path > ").strip()
+                try:
+                    with open(filePath, "r") as f:
+                        items = f.read().splitlines()
+                    if items:
+                        print(f"[🐲] Loaded {len(items)} contract(s).")
+                        return items
+                    print("[🐲] File is empty.")
+                except Exception as e:
+                    print(f"[🐲] Error loading file: {e}")
+            else:
+                print("[🐲] Invalid choice.")
+        except ValueError:
+            print("[🐲] Invalid input, try again.")
 
 def selectFile(chainName):
     filesChoice, files = utils.searchForTxt(chain=chainName)
@@ -75,9 +106,10 @@ def selectFile(chainName):
             print(f"[🐲] File error: {e}")
 
 
-def getContractAddress(expectedLengths):
+def getContractAddress(expectedLengths, chainName=None):
     while True:
-        address = input("[❓] Contract Address > ").strip()
+        promptLabel = f"[❓] {chainName} Contract Address > " if chainName else "[❓] Contract Address > "
+        address = input(promptLabel).strip()
         if len(address) in expectedLengths:
             return address
         print(f"[🐲] Invalid length. Expected one of: {expectedLengths}")
@@ -85,6 +117,13 @@ def getContractAddress(expectedLengths):
 def promptSkipWallets():
     while True:
         choice = input("[❓] Skip wallets with no buys in 30d (Y/N)> ").strip().upper()
+        if choice in ["Y", "N"]:
+            return choice == "Y"
+        print("[🐲] Invalid input.")
+
+def promptDebugFailedCriteria():
+    while True:
+        choice = input("[❓] Enable debug for failed criteria (Y/N) > ").strip().upper()
         if choice in ["Y", "N"]:
             return choice == "Y"
         print("[🐲] Invalid input.")
@@ -156,6 +195,8 @@ def eth():
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 skipWallets = promptSkipWallets()
+                if hasattr(walletCheck, "enableDebug"):
+                    walletCheck.enableDebug(promptDebugFailedCriteria())
                 walletCheck.fetchWalletData(wallets, threads=threads, skipWallets=skipWallets, useProxies=useProxies)
                 print(optionsChoice)
             elif optInput == 3:
@@ -170,13 +211,13 @@ def eth():
                     print("[🐲] Tokens file is empty.")
                 print(optionsChoice)
             elif optInput == 4:
-                contractAddress = getContractAddress("Ethereum", [40, 41, 42])
+                contractAddress = getContractAddress([40, 41, 42], chainName="Ethereum")
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 scanInstance.getAllTxMakers(contractAddress, threads, useProxies)
                 print(optionsChoice)
             elif optInput == 5:
-                contractAddress = getContractAddress("Ethereum", [40, 41, 42])
+                contractAddress = getContractAddress([40, 41, 42], chainName="Ethereum")
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 print("[🐲] Get UNIX Timestamps here > https://www.unixtimestamp.com")
@@ -231,22 +272,24 @@ def solana():
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 skipWallets = promptSkipWallets()
+                if hasattr(walletCheck, "enableDebug"):
+                    walletCheck.enableDebug(promptDebugFailedCriteria())
                 walletCheck.fetchWalletData(wallets, threads=threads, skipWallets=skipWallets, useProxies=useProxies)
                 print(optionsChoice)
             elif optInput == 3:
-                contractAddresses = selectFile("Solana")
+                contractAddresses = getSolanaContracts()
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 topTradersInstance.topTraderData(contractAddresses, threads, useProxies)
                 print(optionsChoice)
             elif optInput == 4:
-                contractAddress = getContractAddress("Solana", [43, 44])
+                contractAddress = getContractAddress([43, 44])
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 scanInstance.getAllTxMakers(contractAddress, threads, useProxies)
                 print(optionsChoice)
             elif optInput == 5:
-                contractAddress = getContractAddress("Solana", [43, 44])
+                contractAddress = getContractAddress([43, 44])
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 print("[🐲] Get UNIX Timestamps here > https://www.unixtimestamp.com")
@@ -255,22 +298,17 @@ def solana():
                 endTimestamp = int(input("[❓] End UNIX Timestamp > "))
                 timestampInstance.getTxByTimestamp(contractAddress, threads, startTimestamp, endTimestamp, useProxies)
             elif optInput == 6:
-                contractAddress = getContractAddress("Solana", [43, 44])
-                walletAddress = getContractAddress("Solana", [43, 44])
-                threads = getThreads()
-                useProxies = getProxiesSetting()
-                copyTradeInstance.findWallets(contractAddress, walletAddress, threads, useProxies)
+                print(f"\n[🐲] Read This -> https://github.com/1f1n/Dragon#copy-wallet-finder\n")
+                print(optionsChoice)
             elif optInput == 7:
+                contractAddresses = getSolanaContracts()
                 threads = getThreads()
                 useProxies = getProxiesSetting()
-                with open('Dragon/data/Solana/TopHolders/tokens.txt', 'r') as fp:
-                    contractAddresses = fp.read().splitlines()
-                if contractAddresses:
-                    topHoldersInstance.topHolderData(contractAddresses, threads, useProxies)
-                else:
-                    print("[🐲] Tokens file is empty.")
+
+                topHoldersInstance.topHolderData(contractAddresses, threads, useProxies)
+                print(optionsChoice)
             elif optInput == 8:
-                contractAddresses = selectFile("Solana")
+                contractAddresses = getSolanaContracts()
                 buyers = int(input("[❓] Amount of Early Buyers > "))
                 if buyers > 100:
                     print("[🐲] Maximum early buyers is 100. Defaulting to 40.")
@@ -313,6 +351,8 @@ def bsc():
                 threads = getThreads()
                 useProxies = getProxiesSetting()
                 skipWallets = promptSkipWallets()
+                if hasattr(walletCheck, "enableDebug"):
+                    walletCheck.enableDebug(promptDebugFailedCriteria())
                 walletCheck.fetchWalletData(wallets, threads=threads, skipWallets=skipWallets, useProxies=useProxies)
                 print(optionsChoice)
             elif optInput == 2:
